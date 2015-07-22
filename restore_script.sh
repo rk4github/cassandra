@@ -4,6 +4,14 @@ SNAPSHOTS=$1
 
 function restore (){
 SNAPSHOTS=$1
+# Check Provided Restore Point
+aws s3 ls s3://cassandra-backup-dir/snapshots/$SNAPSHOTS > 1
+if [ $? -eq 0 ]; then
+    echo "Restore point available"
+else
+    echo "Restore point not available"
+	exit
+fi
 
 # Set CASSANDRA_HOME
 CASSANDRA_HOME=`pgrep -f cassandra | xargs pwdx |awk '{print $2}'`
