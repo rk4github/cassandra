@@ -29,5 +29,10 @@ dir_list=`sed -n ${i}p snapshot_dir_list`
 aws s3 sync "$SNP_VAR" s3://cassandra-backup-dir/sync_dir"${dir_list}" --delete
 done
 aws s3 sync s3://cassandra-backup-dir/sync_dir s3://cassandra-backup-dir/snapshots/$(date +%Y%m%d%H)
+cat snp_dir_list | cut -d "/" -f 1,2,3,4,5,6,7 > remove_incremental_list
+for SK_VAR in `cat remove_incremental_list`;
+do 
+rm -rf "$SK_VAR"/backups/*x
+done
 }
 backup
