@@ -32,15 +32,13 @@ with open(file_name, 'r') as f:
         if line == 'data_file_directories:\n':
             CASSANDRA_DATA_DIR = f.next().strip().split(" ")[1]
 
-print CASSANDRA_DATA_DIR
 NODETOOL = 'nodetool'
 # Snapshot format
 SNAPSHOTS = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H%M%S')
-print SNAPSHOTS
 
 # Create snapshots for all keyspaces
 print 'Creating Snapshots For All Keyspaces.....'
-call([NODETOOL, "snapshot", "-t", SNAPSHOTS])
+#call([NODETOOL, "snapshot", "-t", SNAPSHOTS])
 
 # Get Snapshots Lists
 SNAPSHOTS_DIR_LIST = CASSANDRA_DATA_DIR+"/*/*/snapshots/"+SNAPSHOTS
@@ -55,10 +53,20 @@ PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 for dir_path in paths:
 	a=dir_path.split("/snapshots")[0]
         b=a.split(CASSANDRA_DATA_DIR)[1]
-	print b
+	c=b.split("/")[0]
+	print c
 	cmd = PATH+"/temp.py "+dir_path+" s3://cassandra-backup-dir/sync_dir"+b
-	print cmd
-	os.system(cmd)
+	#print cmd
+	text = SNAPSHOTS+ +c+" s3://cassandra-backup-dir/sync_dir"+b
+	print text
+	with open("metadata", "a") as myfile:
+		myfile.write(text + "\n")
+	#os.system(cmd)
+	
+	
+snap = PATH+"/temp.py s3://cassandra-backup-dir/sync_dir s3://cassandra-backup-dir/snapshots/"+SNAPSHOTS
+meta = PATH+"/temp.py metadata s3://cassandra-backup-dir/snapshots/"+SNAPSHOTS+"/metadata"
+print meta
+#os.system(snap)
+#os.system(meta)
 
-snap = PATH+"/temp.py s3://cassandra-backup-dir/sync_dir s3://cassandra-backup-dir/"+SNAPSHOTS
-os.system(snap)
