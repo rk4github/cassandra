@@ -1,0 +1,5 @@
+[servers]
+ip=192.168.33.20,192.168.33.20
+recovery=/home/vagrant/hello.py
+backup=hi.py
+
