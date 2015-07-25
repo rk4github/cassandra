@@ -61,11 +61,10 @@ PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 
 for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
-#	keyspacePath=snapshotDirColumnFamilyPath.split("/snapshots")[0]
-#        b=keyspacePath.split(CASSANDRA_DATA_DIR())[1]
+	keyspacePath=snapshotDirColumnFamilyPath.split("/snapshots")[0]
+        b=keyspacePath.split(CASSANDRA_DATA_DIR())[1]
 #	keyspace=b.split("/")[1]
-#	columnFamily=b.split("/")[2]
-	columnFamily=ntpath.basename(snapshotDirColumnFamilyPath)
+	columnFamily=b.split("/")[2]
 
 	s3SyncDir = "s3://"+config.bucket_name+"/"+config.node_name+"/"+config.sync_dir+"/"+KEYSPACE+"/"+columnFamily
 
@@ -77,8 +76,8 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
 #		myfile.write(s3SyncMetaInfo + "\n")
 
 	print "Syncing Differential Snapshot: <Local-2-S3>"
-	print "Executing: " + s3SyncCommand 
-	os.system(s3SyncCommand)
+	print "Executing: " + s3SyncCommand + " to sync snapshot of keyspace " + KEYSPACE + " for cloumn family " + columnFamily
+#	os.system(s3SyncCommand)
 
 
 	s3SnapshotDirectory = "s3://" + config.bucket_name +"/"+config.node_name+"/snapshots/"+KEYSPACE+"/"+SNAPSHOTS+"/"+columnFamily
@@ -88,5 +87,5 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
         print "Creating Snapshot: <S3-3-S3>"
         # print snap
 	print "Executing: " + s3RemoteDataSyncCommand
-        os.system(s3RemoteDataSyncCommand)
+#        os.system(s3RemoteDataSyncCommand)
 #        os.system(metaFileUpdateCommand)	
