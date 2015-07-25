@@ -60,32 +60,36 @@ snapshotDirColumnFamilyPaths = glob(SNAPSHOTS_DIR_LIST)
 PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
 
 
+nodeS3Path = "s3://"+config.bucket_name+"/"+config.node_name
 for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
 	keyspacePath=snapshotDirColumnFamilyPath.split("/snapshots")[0]
         b=keyspacePath.split(CASSANDRA_DATA_DIR())[1]
 #	keyspace=b.split("/")[1]
 	columnFamily=b.split("/")[2]
 
-	s3SyncDir = "s3://"+config.bucket_name+"/"+config.node_name+"/"+config.sync_dir+"/"+KEYSPACE+"/"+columnFamily
+	s3SyncDir = nodeS3Path + "/" + config.sync_dir + "/"+KEYSPACE + "/"+columnFamily
 
 	s3SyncCommand = PATH+"/boto-rsync.py "+snapshotDirColumnFamilyPath+" " + s3SyncDir
 
-#	s3SyncMetaInfo = SNAPSHOTS+" "+keyspace+" s3://"+config.bucket_name+"/"+config.node_name+"/"+config.sync_dir+"/"
+	s3SyncMetaInfo = SNAPSHOTS + " " + KEYSPACE + nodeS3Path + "/"+config.sync_dir + "/"
 
-#	with open("metadata", "a") as myfile:
-#		myfile.write(s3SyncMetaInfo + "\n")
+	with open("metadata", "a") as myfile:
+		myfile.write(s3SyncMetaInfo + "\n")
 
 	print "Syncing Differential Snapshot: <Local-2-S3>"
 	print "Executing: " + s3SyncCommand + " to sync snapshot of keyspace " + KEYSPACE + " for cloumn family " + columnFamily
-#	os.system(s3SyncCommand)
+	os.system(s3SyncCommand)
 
 
-	s3SnapshotDirectory = "s3://" + config.bucket_name +"/"+config.node_name+"/snapshots/"+KEYSPACE+"/"+SNAPSHOTS+"/"+columnFamily
-	s3RemoteDataSyncCommand = PATH+"/boto-rsync.py " + s3SyncDir + " " + s3SnapshotDirectory
+	s3SnapshotDirectory = nodeS3Path + "/snapshots/"+KEYSPACE+"/"+SNAPSHOTS+"/"+columnFamily
+	s3RemoteCopyCommand = PATH+"/boto-rsync.py " + s3SyncDir + " " + s3SnapshotDirectory
 
-#        metaFileUpdateCommand = PATH+"/boto-rsync.py metadata s3://cassandra-backup-dir/snapshots/"+KEYSPACE+"/metadata"
+        metaFileUpdateCommand = PATH + "/boto-rsync.py metadata " + nodeS3Path + "/snapshots/" + KEYSPACE + "/metadata"
+
         print "Creating Snapshot: <S3-3-S3>"
         # print snap
-	print "Executing: " + s3RemoteDataSyncCommand
-#        os.system(s3RemoteDataSyncCommand)
-#        os.system(metaFileUpdateCommand)	
+	print "Executing s3 remote copy command : " + s3RemoteCopyCommand
+	print "Executing Metadata upload command : " + metaFileUpdateCommand
+
+        os.system(s3RemoteCopyCommand)
+        os.system(metaFileUpdateCommand)	
