@@ -15,7 +15,7 @@ from boto.exception import S3ResponseError
 nn=""
 for KEYSPACE in sys.argv[1:]:
         nn=KEYSPACE+" "+nn
-	print KEYSPACE	
+	#print KEYSPACE
 
 # Get CASSANDRA_HOME
 try:
@@ -38,7 +38,7 @@ SNAPSHOTS = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H%M%S')
 
 # Create snapshots for all keyspaces
 print 'Creating Snapshots For All Keyspaces.....'
-call([NODETOOL, "snapshot", "-t", SNAPSHOTS])
+call([NODETOOL, "snapshot", "-t", SNAPSHOTS, KEYSPACE])
 
 # Get Snapshots Lists
 SNAPSHOTS_DIR_LIST = CASSANDRA_DATA_DIR+"/*/*/snapshots/"+SNAPSHOTS
@@ -54,17 +54,29 @@ for dir_path in paths:
 	a=dir_path.split("/snapshots")[0]
         b=a.split(CASSANDRA_DATA_DIR)[1]
 	c=b.split("/")[1]
-	cmd = PATH+"/temp.py "+dir_path+" s3://cassandra-backup-dir/sync_dir"+b
-	text = SNAPSHOTS+" "+c+" s3://cassandra-backup-dir/sync_dir"+b
+	d=b.split("/")[2]
+	with open("property.file", "a") as prop:
+                myfile.write( + "\n")
+	cmd = PATH+"/temp.py "+dir_path+" s3://cassandra-backup-dir/sync_dir/"+b
+	text = SNAPSHOTS+" "+c+" s3://cassandra-backup-dir/sync_dir/"+c
 	with open("metadata", "a") as myfile:
 		myfile.write(text + "\n")
 	print "Syncing Differential Snapshot: <Local-2-S3>"
 	os.system(cmd)
+	snap = PATH+"/temp.py s3://cassandra-backup-dir/sync_dir/"+KEYSPACE+"/"+d+ " ""s3://cassandra-backup-dir/snapshots/"+KEYSPACE+"/"+SNAPSHOTS+"/"+d
+        meta = PATH+"/temp.py metadata s3://cassandra-backup-dir/snapshots/"+KEYSPACE+"/metadata"
+        print "Creating Snapshot: <S3-3-S3>"
+        # print snap
+        os.system(snap)
+        os.system(meta)	
+
 	
-	
-snap = PATH+"/temp.py s3://cassandra-backup-dir/sync_dir s3://cassandra-backup-dir/snapshots/"+SNAPSHOTS
-meta = PATH+"/temp.py metadata s3://cassandra-backup-dir/snapshots/"+SNAPSHOTS+"/metadata"
-print "Creating Snapshot: <S3-3-S3>"
-os.system(snap)
-os.system(meta)
+
+#snap = PATH+"/temp.py s3://cassandra-backup-dir/sync_dir/"+KEYSPACE+" ""s3://cassandra-backup-dir/snapshots/"+SNAPSHOTS+"/"+KEYSPACE
+#meta = PATH+"/temp.py metadata s3://cassandra-backup-dir/snapshots/"+SNAPSHOTS+"/metadata"
+#print "Creating Snapshot: <S3-3-S3>"
+# print snap
+#os.system(snap)
+#os.system(meta)
+
 
