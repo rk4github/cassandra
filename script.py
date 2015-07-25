@@ -11,6 +11,7 @@ import boto
 from boto.exception import S3ResponseError
 import config
 import yaml
+import ntpath
 
 # Get Keyspace
 KEYSPACE = sys.argv[1]
@@ -38,6 +39,7 @@ def CASSANDRA_DATA_DIR():
         return dataFileDirectory[0]
 	
 
+CASSANDRA_HOME = os.environ['CASSANDRA_HOME']
 
 NODETOOL = CASSANDRA_HOME +'/bin/nodetool'
 # Snapshot format
@@ -50,15 +52,20 @@ call([NODETOOL, "snapshot", "-t", SNAPSHOTS, KEYSPACE])
 # Get Snapshots Lists
 SNAPSHOTS_DIR_LIST = CASSANDRA_DATA_DIR()+"/"+KEYSPACE+"/*/snapshots/"+SNAPSHOTS
 print SNAPSHOTS_DIR_LIST
+
+keyspacePath = CASSANDRA_DATA_DIR()+"/"+KEYSPACE
+
 snapshotDirColumnFamilyPaths = glob(SNAPSHOTS_DIR_LIST)
 # Get Current working directory
 PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
 
+
 for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
-	keyspacePath=snapshotDirColumnFamilyPath.split("/snapshots")[0]
-        b=keyspacePath.split(CASSANDRA_DATA_DIR())[1]
+#	keyspacePath=snapshotDirColumnFamilyPath.split("/snapshots")[0]
+#        b=keyspacePath.split(CASSANDRA_DATA_DIR())[1]
 #	keyspace=b.split("/")[1]
-	columnFamily=b.split("/")[2]
+#	columnFamily=b.split("/")[2]
+	columnFamily=ntpath.basename(snapshotDirColumnFamilyPath)
 
 	s3SyncDir = "s3://"+config.bucket_name+"/"+config.node_name+"/"+config.sync_dir+"/"+KEYSPACE+"/"+columnFamily
 
