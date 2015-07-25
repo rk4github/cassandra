@@ -39,7 +39,7 @@ def CASSANDRA_DATA_DIR():
 	
 
 
-NODETOOL = '/opt/cassandra/bin/nodetool'
+NODETOOL = CASSANDRA_HOME +'/bin/nodetool'
 # Snapshot format
 SNAPSHOTS = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H%M%S')
 
