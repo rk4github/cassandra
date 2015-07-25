@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import temp
+#import temp
 import inspect
 from subprocess import call
 import subprocess
@@ -10,9 +10,11 @@ import getopt, sys, os
 import boto
 from boto.exception import S3ResponseError
 import config
+import yaml
 
 # Get Keyspace
-KEYSPACE = sys.argv[1:]:
+KEYSPACE = sys.argv[1]
+
 if KEYSPACE == "":
    print "Please Provide Keyspace to Backup"
    sys.exit(1)
@@ -37,35 +39,47 @@ def CASSANDRA_DATA_DIR():
 	
 
 
-NODETOOL = 'nodetool'
+NODETOOL = '/opt/cassandra/bin/nodetool'
 # Snapshot format
 SNAPSHOTS = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H%M%S')
 
 # Create snapshots for all keyspaces
-print 'Creating Snapshots For'+KEYSPACE+'.....'
+print 'Creating Snapshots For ' + KEYSPACE + ' at ' + SNAPSHOTS + '..........'
 call([NODETOOL, "snapshot", "-t", SNAPSHOTS, KEYSPACE])
 
 # Get Snapshots Lists
 SNAPSHOTS_DIR_LIST = CASSANDRA_DATA_DIR()+"/"+KEYSPACE+"/*/snapshots/"+SNAPSHOTS
 print SNAPSHOTS_DIR_LIST
-paths = glob(SNAPSHOTS_DIR_LIST)
+snapshotDirColumnFamilyPaths = glob(SNAPSHOTS_DIR_LIST)
 # Get Current working directory
 PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
 
-for dir_path in paths:
-	a=dir_path.split("/snapshots")[0]
-        b=a.split(CASSANDRA_DATA_DIR)[1]
-	c=b.split("/")[1]
-	d=b.split("/")[2]
-	cmd = PATH+"/temp.py "+dir_path+" s3://"+config.bucket_name+"/"+config.node_name+"/"+config.sync_dir+"/"
-	text = SNAPSHOTS+" "+c+" s3://"+config.bucket_name+"/"+config.node_name+"/"+config.sync_dir+"/"
-	with open("metadata", "a") as myfile:
-		myfile.write(text + "\n")
+for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
+	keyspacePath=snapshotDirColumnFamilyPath.split("/snapshots")[0]
+        b=keyspacePath.split(CASSANDRA_DATA_DIR())[1]
+#	keyspace=b.split("/")[1]
+	columnFamily=b.split("/")[2]
+
+	s3SyncDir = "s3://"+config.bucket_name+"/"+config.node_name+"/"+config.sync_dir+"/"+KEYSPACE+"/"+columnFamily
+
+	s3SyncCommand = PATH+"/boto-rsync.py "+dir_path+" " + s3SyncDir
+
+#	s3SyncMetaInfo = SNAPSHOTS+" "+keyspace+" s3://"+config.bucket_name+"/"+config.node_name+"/"+config.sync_dir+"/"
+
+#	with open("metadata", "a") as myfile:
+#		myfile.write(s3SyncMetaInfo + "\n")
+
 	print "Syncing Differential Snapshot: <Local-2-S3>"
-	os.system(cmd)
-	snap = PATH+"/temp.py s3://cassandra-backup-dir/sync_dir/"+KEYSPACE+"/"+d+ " ""s3://cassandra-backup-dir/snapshots/"+KEYSPACE+"/"+SNAPSHOTS+"/"+d
-        meta = PATH+"/temp.py metadata s3://cassandra-backup-dir/snapshots/"+KEYSPACE+"/metadata"
+	print "Executing: " + s3SyncCommand 
+	os.system(s3SyncCommand)
+
+
+	s3SnapshotDirectory = "s3://" + config.bucket_name +"/snapshots/"+KEYSPACE+"/"+SNAPSHOTS+"/"+columnFamily
+	s3RemoteDataSyncCommand = PATH+"/boto-rsync.py " + s3SyncDir + " " + s3SnapshotDirectory
+
+#        metaFileUpdateCommand = PATH+"/boto-rsync.py metadata s3://cassandra-backup-dir/snapshots/"+KEYSPACE+"/metadata"
         print "Creating Snapshot: <S3-3-S3>"
         # print snap
-        os.system(snap)
-        os.system(meta)	
+	print "Executing: " + s3RemoteDataSyncCommand
+        os.system(s3RemoteDataSyncCommand)
+#        os.system(metaFileUpdateCommand)	
