@@ -10,7 +10,7 @@ import inspect
 def getRestoreFolder(restoreDate):
 		s3KeySpaceRestoreFolder = "s3://" + config.bucket_name +"/snapshots/"+keyspaceName+"/";
 		#listCommand = "ls" + restoreDate
-		conn = S3Connection('XXXXXXXXXX','YYYYYYYYYYYY')
+		conn = S3Connection('XXXXXXXXXXX','YYYYYYYYYYYY')
 		bucket = conn.get_bucket(config.bucket_name)
 		for key in bucket.list("re"):
 			print key.name.encode('utf-8')
