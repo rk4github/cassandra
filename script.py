@@ -62,7 +62,7 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
 
 	s3SyncDir = "s3://"+config.bucket_name+"/"+config.node_name+"/"+config.sync_dir+"/"+KEYSPACE+"/"+columnFamily
 
-	s3SyncCommand = PATH+"/boto-rsync.py "+dir_path+" " + s3SyncDir
+	s3SyncCommand = PATH+"/boto-rsync.py "+snapshotDirColumnFamilyPath+" " + s3SyncDir
 
 #	s3SyncMetaInfo = SNAPSHOTS+" "+keyspace+" s3://"+config.bucket_name+"/"+config.node_name+"/"+config.sync_dir+"/"
 
@@ -74,7 +74,7 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
 	os.system(s3SyncCommand)
 
 
-	s3SnapshotDirectory = "s3://" + config.bucket_name +"/snapshots/"+KEYSPACE+"/"+SNAPSHOTS+"/"+columnFamily
+	s3SnapshotDirectory = "s3://" + config.bucket_name +"/"+config.node_name+"/snapshots/"+KEYSPACE+"/"+SNAPSHOTS+"/"+columnFamily
 	s3RemoteDataSyncCommand = PATH+"/boto-rsync.py " + s3SyncDir + " " + s3SnapshotDirectory
 
 #        metaFileUpdateCommand = PATH+"/boto-rsync.py metadata s3://cassandra-backup-dir/snapshots/"+KEYSPACE+"/metadata"
