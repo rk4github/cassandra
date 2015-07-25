@@ -43,7 +43,7 @@ CASSANDRA_HOME = os.environ['CASSANDRA_HOME']
 
 NODETOOL = CASSANDRA_HOME +'/bin/nodetool'
 # Snapshot format
-SNAPSHOTS = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H%M%S')
+SNAPSHOTS = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d')
 
 # Create snapshots for all keyspaces
 print 'Creating Snapshots For ' + KEYSPACE + ' at ' + SNAPSHOTS + '..........'
