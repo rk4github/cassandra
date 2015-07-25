@@ -1,3 +1,3 @@
-bucket_name="snndy"
+bucket_name="cassandra-backup-dir"
 node_name="dev"
-sync_dir="de"
+sync_dir="sync_dir"
