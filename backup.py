@@ -71,7 +71,7 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
 
 	s3SyncCommand = PATH+"/boto-rsync.py "+snapshotDirColumnFamilyPath+" " + s3SyncDir
 
-	s3SyncMetaInfo = SNAPSHOTS + " " + KEYSPACE + nodeS3Path + "/"+config.sync_dir + "/"
+	s3SyncMetaInfo = SNAPSHOTS + " " + KEYSPACE + " " + nodeS3Path + "/"+config.sync_dir + "/"
 
 	with open("metadata", "a") as myfile:
 		myfile.write(s3SyncMetaInfo + "\n")
@@ -87,7 +87,6 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
         metaFileUpdateCommand = PATH + "/boto-rsync.py metadata " + nodeS3Path + "/snapshots/" + KEYSPACE + "/metadata"
 
         print "Creating Snapshot: <S3-3-S3>"
-        # print snap
 	print "Executing s3 remote copy command : " + s3RemoteCopyCommand
 	print "Executing Metadata upload command : " + metaFileUpdateCommand
 
