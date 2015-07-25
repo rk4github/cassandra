@@ -27,12 +27,15 @@ except KeyError:
 # Get CASSANDRA_DATA_DIR
 def CASSANDRA_DATA_DIR():
 	CASSANDRA_HOME = os.environ['CASSANDRA_HOME']
-	file_name =  CASSANDRA_HOME+"/conf/cassandra.yaml"
-	with open(file_name, 'r') as f:
-	    for line in f:
-        	if line == 'data_file_directories:\n':
-	            CASSANDRA_DATA_DIR = f.next().strip().split(" ")[1]
-	return CASSANDRA_DATA_DIR
+	cassandraConfigFile =  CASSANDRA_HOME+"/conf/cassandra.yaml"
+	
+	with open(cassandraConfigFile, 'r') as f:
+		keys = yaml.load(f)
+
+	dataFileDirectory = keys["data_file_directories"]
+        return dataFileDirectory[0]
+	
+
 
 NODETOOL = 'nodetool'
 # Snapshot format
