@@ -7,14 +7,6 @@ import config
 import inspect
 
 
-def getRestoreFolder(restoreDate):
-		s3KeySpaceRestoreFolder = "s3://" + config.bucket_name +"/snapshots/"+keyspaceName+"/";
-		#listCommand = "ls" + restoreDate
-		conn = S3Connection('XXXXXXXXXXX','YYYYYYYYYYYY')
-		bucket = conn.get_bucket(config.bucket_name)
-		for key in bucket.list("re"):
-			print key.name.encode('utf-8')
-
 # Get CASSANDRA_HOME
 def getCassandraHome():
 	cassandra_home=os.environ['CASSANDRA_HOME']
@@ -66,6 +58,3 @@ if keyspaceName == "":
    sys.exit(1)
 
 restoreKeySpace()
-
-	
-
