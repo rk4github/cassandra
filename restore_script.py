@@ -9,13 +9,14 @@ import inspect
 
 # Get CASSANDRA_HOME
 def getCassandraHome():
-	cassandra_home=os.environ['CASSANDRA_HOME']
+	#cassandra_home=os.environ['CASSANDRA_HOME']
+	cassandra_home=config.cassandraHome
 	if cassandra_home != "":
 		 return cassandra_home
 	else :
 		print "Please set the environment variable CASSANDRA_HOME"
 		sys.exit(1)
-		
+
 def getCassandraDataDir(cassandra_home):
         cassandraConfigFile =  cassandra_home+ "/conf/cassandra.yaml"
         with open(cassandraConfigFile, 'r') as configFile:
