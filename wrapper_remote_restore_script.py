@@ -13,7 +13,7 @@ list_of_ipsAddress=config.get('servers', 'ip').split(",")
 get_action=config.get('servers', action)
 
 for ipAddress in list_of_ipsAddress:
-	command="python "+get_action+" "+keyspaceName+" "+restorePoint
+	command="python "+get_action+" "+keyspaceName+" "+restorePoint+ " </dev/null >restore.log 2>&1 &"
 	ssh_cmd="ssh "+ipAddress+" "+'"%s"'%command
 	print ssh_cmd
 	os.system(ssh_cmd)
