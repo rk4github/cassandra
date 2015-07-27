@@ -26,7 +26,7 @@ if KEYSPACE == "":
 #except KeyError:
 #   print "Please set the environment variable CASSANDRA_HOME"
 #   sys.exit(1)
-CASSANDRA_HOME = '/opt/cassandra'
+CASSANDRA_HOME = config.cassandraHome
 
 # Get CASSANDRA_DATA_DIR
 def CASSANDRA_DATA_DIR():
