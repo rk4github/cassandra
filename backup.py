@@ -21,15 +21,16 @@ if KEYSPACE == "":
    sys.exit(1)
 
 # Get CASSANDRA_HOME
-try:
-        os.environ['CASSANDRA_HOME']
-except KeyError:
-   print "Please set the environment variable CASSANDRA_HOME"
-   sys.exit(1)
+#try:
+#	CASSANDRA_HOME = os.environ['CASSANDRA_HOME']
+#except KeyError:
+#   print "Please set the environment variable CASSANDRA_HOME"
+#   sys.exit(1)
+CASSANDRA_HOME = '/opt/cassandra'
 
 # Get CASSANDRA_DATA_DIR
 def CASSANDRA_DATA_DIR():
-	CASSANDRA_HOME = os.environ['CASSANDRA_HOME']
+#	CASSANDRA_HOME = os.environ['CASSANDRA_HOME']
 	cassandraConfigFile =  CASSANDRA_HOME+"/conf/cassandra.yaml"
 	
 	with open(cassandraConfigFile, 'r') as f:
@@ -39,7 +40,7 @@ def CASSANDRA_DATA_DIR():
         return dataFileDirectory[0]
 	
 
-CASSANDRA_HOME = os.environ['CASSANDRA_HOME']
+#CASSANDRA_HOME = os.environ['CASSANDRA_HOME']
 
 NODETOOL = CASSANDRA_HOME +'/bin/nodetool'
 # Snapshot format
