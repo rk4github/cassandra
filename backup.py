@@ -12,6 +12,7 @@ from boto.exception import S3ResponseError
 import config
 import yaml
 import ntpath
+import socket
 
 # Get Keyspace
 KEYSPACE = sys.argv[1]
@@ -20,7 +21,13 @@ if KEYSPACE == "":
    print "Please Provide Keyspace to Backup"
    sys.exit(1)
 
-cassandraHome = config.cassandraHome
+# Get CASSANDRA_HOME
+#cassandraHome = config.cassandraHome
+try:
+        cassandraHome = os.environ['CASSANDRA_HOME']
+except KeyError:
+   print "Please set the environment variable CASSANDRA_HOME"
+   sys.exit(1)
 
 # Get cassandraDataDir
 def cassandraDataDir():
@@ -50,20 +57,26 @@ snapshotDirColumnFamilyPaths = glob(snapshotsDirList)
 # Get Current working directory
 PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
 
+bucketName = "cassandra-backup-dir"
+nodeName = (socket.gethostname())
 
-nodeS3Path = "s3://"+config.bucket_name+"/"+config.node_name
+#nodeS3Path = "s3://"+config.bucket_name+"/"+config.node_name
+nodeS3Path = "s3://"+bucketName+"/"+nodeName
+
 for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
         keyspacePath=snapshotDirColumnFamilyPath.split("/snapshots")[0]
         b=keyspacePath.split(cassandraDataDir())[1]
 #       keyspace=b.split("/")[1]
         columnFamily=b.split("/")[2]
 
-        s3SyncDir = nodeS3Path + "/" + config.sync_dir + "/"+KEYSPACE + "/"+columnFamily
-
+        #s3SyncDir = nodeS3Path + "/" + config.sync_dir + "/"+KEYSPACE + "/"+columnFamily
+	s3SyncDir = nodeS3Path + "/sync_dir/"+KEYSPACE + "/"+columnFamily
+	
         s3SyncCommand = PATH+"/boto-rsync.py "+snapshotDirColumnFamilyPath+" " + s3SyncDir
-
-        s3SyncMetaInfo = snapshot + " " + KEYSPACE + " " + nodeS3Path + "/"+config.sync_dir + "/"
-
+	
+        #s3SyncMetaInfo = snapshot + " " + KEYSPACE + " " + nodeS3Path + "/"+config.sync_dir + "/"
+	s3SyncMetaInfo = snapshot + " " + KEYSPACE + " " + nodeS3Path + "/sync_dir/"
+	
         with open("metadata", "a") as myfile:
                 myfile.write(s3SyncMetaInfo + "\n")
 
@@ -77,10 +90,9 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
 
         metaFileUpdateCommand = PATH + "/boto-rsync.py metadata " + nodeS3Path + "/snapshots/" + KEYSPACE + "/metadata"
 
-        print "Creating Snapshot: <S3-2-S3>"
+        print "Creating Snapshot: <S3-3-S3>"
         print "Executing s3 remote copy command : " + s3RemoteCopyCommand
         print "Executing Metadata upload command : " + metaFileUpdateCommand
 
         os.system(s3RemoteCopyCommand)
         os.system(metaFileUpdateCommand)
-
