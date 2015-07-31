@@ -66,8 +66,12 @@ def restoreKeySpace():
 	os.system ( deletSSTTablesCommand)
 	
 	currentContextFolderPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
-	s3SnapshotDirectory = "s3://" + config.bucket_name +"/"+config.node_name+"/snapshots/"+keyspaceName+"/"+restoreFolderName+"/"
+	
+	#s3SnapshotDirectory = "s3://" + config.bucket_name +"/"+config.node_name+"/snapshots/"+keyspaceName+"/"+restoreFolderName+"/"
+	s3SnapshotDirectory = "s3://" + bucketName + "/" + nodeName  + "/snapshots/" + keyspaceName +"/"+ restoreFolderName +"/"
+	
 	s3RemoteDataSyncCommand = currentContextFolderPath+"/boto-rsync.py " + s3SnapshotDirectory + " " + keySpaceSSTLocation
+	
 	print "syncing the backed up content in the local Cassandra folder from:"+s3SnapshotDirectory +" to " +keySpaceSSTLocation
 	os.system(s3RemoteDataSyncCommand)
 	
@@ -83,5 +87,7 @@ if keyspaceName == "":
    print "Please Provide Keyspace to Restore"
    sys.exit(1)
 
+bucketName = "cassandra-backup-dir"
+nodeName = (socket.gethostname())
 
 restoreKeySpace()
