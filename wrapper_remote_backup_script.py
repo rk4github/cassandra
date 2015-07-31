@@ -9,13 +9,22 @@ keyspaceName=sys.argv[2]
 
 config = ConfigParser.ConfigParser()
 config.readfp(open(r'server.properties'))
-list_of_ipsAddress=config.get('servers', 'ip').split(",")
-get_action=config.get('servers', action)
+listOfIPAddress = config.get('servers', 'ip').split(",")
+getAction = config.get('servers', action)
 
-for ipAddress in list_of_ipsAddress:
-	command="nohup python "+get_action+" "+keyspaceName+ "</dev/null >backup.log 2>&1 &"
-	ssh_cmd="ssh "+ipAddress+" "+'"%s"'%command
+print "List of Nodes"
+print listOfIPAddress
+
+inputListOfIPAddress = input('Please provide nodes list comma separated values of node: i.e. "10.24.1.20,10.24.1.21"\n')
+
+
+for ipAddress in inputListOfIPAddress.split(','):
+	command = "source /etc/profile;nohup python "+getAction+" "+keyspaceName+ " </dev/null >backup.log 2>&1 &"
+	ssh_cmd = "ssh "+ipAddress+" "+'"%s"'%command
+	scpCommand = "scp backup.py " + ipAddress + ":/opt/"
+	print scpCommand
 	print ssh_cmd
+	os.system(scpCommand)
 	os.system(ssh_cmd)
 
 
