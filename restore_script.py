@@ -9,8 +9,8 @@ import inspect
 
 # Get CASSANDRA_HOME
 def getCassandraHome():
-	#cassandra_home=os.environ['CASSANDRA_HOME']
-	cassandra_home=config.cassandraHome
+	cassandra_home=os.environ['CASSANDRA_HOME']
+	#cassandra_home=config.cassandraHome
 	if cassandra_home != "":
 		 return cassandra_home
 	else :
@@ -29,15 +29,40 @@ def restoreKeySpace():
 	cassandraDataDir = getCassandraDataDir(cassandra_home)
 	
 	print "Stopping Cassandra..."
+	
+	# Warning Message for Stopping Cassandra, Once User confirm with Y script will continue futher operation
+	length=len(sys.argv)
+	if ( length <=3 ):
+		userInput = raw_input("Do you want to continue [Y/n]?")
+		if userInput == "Y":
+            		print("Cassandra Stopped")
+        	else:
+           		sys.exit(1)
 	os.system("pgrep -f cassandra | xargs kill")
 	
 	commitLogsLocation = "rm -rf " + cassandraDataDir+ "/../commitlog/*"
 	print "Deleting commit logs from " + commitLogsLocation
+
+	# Warning Message for commitlog, Once User confirm with Y script will continue futher operation
+	if ( length <=3 ):	
+		userInput = raw_input("Do you want to continue [Y/n]?")
+		if userInput == "Y":
+	    		print("Deleted commitlog")
+		else:
+	   		sys.exit(1)
 	os.system(commitLogsLocation)
 	
 	keySpaceSSTLocation=cassandraDataDir+"/"+keyspaceName
 	print "Deleting Key Space SST table from " + keySpaceSSTLocation
 	deletSSTTablesCommand = "rm -rf " + keySpaceSSTLocation
+	
+	# Warning Message for Removing Keyspace directory, Once User confirm with Y script will continue futher operation
+        if ( length <=3 ):
+		userInput = raw_input("Do you want to continue [Y/n]?")
+        	if userInput == "Y":
+            		print("Deleted Key Space SST table")
+        	else:
+           		sys.exit(1)
 	os.system ( deletSSTTablesCommand)
 	
 	currentContextFolderPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
@@ -57,5 +82,6 @@ restoreFolderName = sys.argv[2]
 if keyspaceName == "":
    print "Please Provide Keyspace to Restore"
    sys.exit(1)
+
 
 restoreKeySpace()
