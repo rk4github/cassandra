@@ -81,7 +81,7 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
                 myfile.write(s3SyncMetaInfo + "\n")
 
         print "Syncing Differential Snapshot: <Local-2-S3>"
-        print "Executing: " + s3SyncCommand + " to sync snapshot of keyspace " + KEYSPACE + " for cloumn family " + columnFamily
+        print "Executing: " + s3SyncCommand + " to sync snapshot of keyspace " + KEYSPACE + " for cloumn family " + columnFamily+ " --delete"
         os.system(s3SyncCommand)
 
 
