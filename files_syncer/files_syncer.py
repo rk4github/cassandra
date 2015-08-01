@@ -7,8 +7,8 @@ def getHexaMd5Checksum(stringValue):
 	md5.update(stringValue)
 	return md5.hexdigest()
 
-def getMasterFilesListPath(masterFilesListPath):
-#	masterFilesListPath = "/etc/sandy/" + getHexaMd5Checksum(sourceFolder)
+def getMasterFilesListPath():
+	masterFilesListPath = "/etc/opstree/masterfileslist.meta"
 	return masterFilesListPath
 
 #I'll get the list of all the files present in sourceFolder
@@ -17,8 +17,8 @@ def getCurrentFilesList(sourceFolder):
 	return currentFilesList
 
 #I'll provide master list of files corresponding to sourceFolder
-def getMasterFilesList(s):
-	masterFilesListPath = getMasterFilesListPath(sourceFolder)
+def getMasterFilesList(sourceFolder):
+	masterFilesListPath = getMasterFilesListPath()
 	file = open(masterFilesListPath, 'r')
 
 	fileNames = []
@@ -29,9 +29,9 @@ def getMasterFilesList(s):
 	
 
 #I'll update the master list of files corresponding to source folder
-def updateMasterFilesList(sourceFolder):
+def updateMasterFilesList(sourceFolder ):
 	currentFilesList = getCurrentFilesList(sourceFolder)
-	masterFilesListPath = getMasterFilesListPath(sourceFolder)
+	masterFilesListPath = getMasterFilesListPath()
 	print "Re creating masterFilesListPath: " + masterFilesListPath
 	mastersFileList = open(masterFilesListPath, 'w')
 	for fileName in currentFilesList:
