@@ -17,8 +17,12 @@ def getFilesList(parentDirectory):
 	return files
 
 
-def generateHexzMD5ChecksumForFilesInFolder(parentDirectory):
+def generateHexMD5ChecksumForFilesInFolder(parentDirectory):
 	files = getFilesList(parentDirectory)
+	filesHexaMD5ChecksumMetaInfo = []
 	for fileName in files:
 		hexaMD5Checksum = getHexaMd5Checksum(join(parentDirectory,fileName))
-		print "%s,%s"%(fileName,hexaMD5Checksum)
+		#print "%s,%s"%(fileName,hexaMD5Checksum)
+		filesHexaMD5ChecksumMetaInfo.append({'filename':fileName,'checsum':hexaMD5Checksum})
+	return filesHexaMD5ChecksumMetaInfo
+
