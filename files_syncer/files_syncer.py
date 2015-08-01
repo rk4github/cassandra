@@ -7,8 +7,8 @@ def getHexaMd5Checksum(stringValue):
 	md5.update(stringValue)
 	return md5.hexdigest()
 
-def getMasterFilesListPath(sourceFolder):
-	masterFilesListPath = "/etc/sandy/" + getHexaMd5Checksum(sourceFolder)
+def getMasterFilesListPath(masterFilesListPath):
+#	masterFilesListPath = "/etc/sandy/" + getHexaMd5Checksum(sourceFolder)
 	return masterFilesListPath
 
 #I'll get the list of all the files present in sourceFolder
@@ -17,7 +17,7 @@ def getCurrentFilesList(sourceFolder):
 	return currentFilesList
 
 #I'll provide master list of files corresponding to sourceFolder
-def getMasterFilesList(sourceFolder):
+def getMasterFilesList(s):
 	masterFilesListPath = getMasterFilesListPath(sourceFolder)
 	file = open(masterFilesListPath, 'r')
 
