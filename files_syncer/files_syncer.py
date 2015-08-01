@@ -8,7 +8,7 @@ def getHexaMd5Checksum(stringValue):
 	return md5.hexdigest()
 
 def getMasterFilesListPath():
-	masterFilesListPath = "/etc/opstree/masterfileslist.meta"
+	masterFilesListPath = "/var/opstree/masterfileslist.meta"
 	return masterFilesListPath
 
 #I'll get the list of all the files present in sourceFolder
