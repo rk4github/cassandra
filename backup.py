@@ -13,6 +13,10 @@ import config
 import yaml
 import ntpath
 import socket
+from files_syncer import updateMasterFilesList
+from files_syncer import getNewlyAddedFiles
+from files_syncer import getListOfDeletedFiles
+
 
 # Get Keyspace
 KEYSPACE = sys.argv[1]
@@ -22,7 +26,6 @@ if KEYSPACE == "":
    sys.exit(1)
 
 # Get CASSANDRA_HOME
-#cassandraHome = config.cassandraHome
 try:
         cassandraHome = os.environ['CASSANDRA_HOME']
 except KeyError:
@@ -60,39 +63,54 @@ PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 bucketName = "cassandra-backup-dir"
 nodeName = (socket.gethostname())
 
-#nodeS3Path = "s3://"+config.bucket_name+"/"+config.node_name
 nodeS3Path = "s3://"+bucketName+"/"+nodeName
 
 for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
         keyspacePath=snapshotDirColumnFamilyPath.split("/snapshots")[0]
         b=keyspacePath.split(cassandraDataDir())[1]
-#       keyspace=b.split("/")[1]
         columnFamily=b.split("/")[2]
 
-        #s3SyncDir = nodeS3Path + "/" + config.sync_dir + "/"+KEYSPACE + "/"+columnFamily
-	s3SyncDir = nodeS3Path + "/sync_dir/"+KEYSPACE + "/"+columnFamily
-	
-        s3SyncCommand = PATH+"/boto-rsync.py "+snapshotDirColumnFamilyPath+" " + s3SyncDir
-	
-        #s3SyncMetaInfo = snapshot + " " + KEYSPACE + " " + nodeS3Path + "/"+config.sync_dir + "/"
-	s3SyncMetaInfo = snapshot + " " + KEYSPACE + " " + nodeS3Path + "/sync_dir/"
-	
-        with open("metadata", "a") as myfile:
-                myfile.write(s3SyncMetaInfo + "\n")
+        s3SyncDir = nodeS3Path + "/sync_dir/"+KEYSPACE + "/"+columnFamily
 
-        print "Syncing Differential Snapshot: <Local-2-S3>"
-        print "Executing: " + s3SyncCommand + " to sync snapshot of keyspace " + KEYSPACE + " for cloumn family " + columnFamily+ " --delete"
-        os.system(s3SyncCommand)
 
+        #s3SyncMetaInfo = snapshot + " " + KEYSPACE + " " + nodeS3Path + "/sync_dir/"
+
+        #with open("metadata", "a") as myfile:
+        #        myfile.write(s3SyncMetaInfo + "\n")
+		
+        for files in getNewlyAddedFiles(snapshotDirColumnFamilyPath, KEYSPACE):
+                os.chdir(snapshotDirColumnFamilyPath)
+
+                if os.path.isfile(files):
+                        compressCommand = "tar -czf "+files+".tar.gz "+files
+                        os.system(compressCommand)
+                fileName = files + ".tar.gz"
+                s3SyncCommand = "aws s3 cp "+ fileName + " " + s3SyncDir + "/" + fileName
+                print "Syncing Differential Snapshot: <Local-2-S3>"
+                print (files)
+                print "Executing: " + s3SyncCommand + " to sync snapshot of keyspace " + KEYSPACE + " for cloumn family " + columnFamily
+                os.system(s3SyncCommand)
+		
+	for files in getListOfDeletedFiles(snapshotDirColumnFamilyPath, KEYSPACE):
+		fileName = files + ".tar.gz"
+		s3RemoveCommand = "aws s3 rm " + s3SyncDir + "/" + fileName
+		print "Removing deleted Files: <From-S3>"
+		print (files)
+		print "Executing: " + s3RemoveCommand + " to Remove Deleted of Files From " + KEYSPACE + " for cloumn family " + columnFamily
+		os.system(s3RemoveCommand)
+				
+	updateMasterFilesList(snapshotDirColumnFamilyPath,KEYSPACE )
+        os.chdir(PATH)
 
         s3SnapshotDirectory = nodeS3Path + "/snapshots/"+KEYSPACE+"/"+s3Snapshot+"/"+columnFamily
-        s3RemoteCopyCommand = PATH+"/boto-rsync.py " + s3SyncDir + " " + s3SnapshotDirectory
+        s3RemoteCopyCommand = "aws s3 sync " + s3SyncDir + " " + s3SnapshotDirectory
 
-        metaFileUpdateCommand = PATH + "/boto-rsync.py metadata " + nodeS3Path + "/snapshots/" + KEYSPACE + "/metadata"
+        #metaFileUpdateCommand = PATH + "/boto-rsync.py metadata " + nodeS3Path + "/snapshots/" + KEYSPACE + "/metadata"
 
         print "Creating Snapshot: <S3-3-S3>"
         print "Executing s3 remote copy command : " + s3RemoteCopyCommand
-        print "Executing Metadata upload command : " + metaFileUpdateCommand
+        #print "Executing Metadata upload command : " + metaFileUpdateCommand
 
         os.system(s3RemoteCopyCommand)
-        os.system(metaFileUpdateCommand)
+        #os.system(metaFileUpdateCommand)
+
