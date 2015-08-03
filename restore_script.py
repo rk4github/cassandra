@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import sys, os
 import datetime
 import re
@@ -5,17 +6,19 @@ import yaml
 from boto.s3.connection import S3Connection
 import config
 import inspect
+import socket
+from os import path
 
 
 # Get CASSANDRA_HOME
 def getCassandraHome():
-	cassandra_home=os.environ['CASSANDRA_HOME']
-	#cassandra_home=config.cassandraHome
-	if cassandra_home != "":
-		 return cassandra_home
-	else :
-		print "Please set the environment variable CASSANDRA_HOME"
-		sys.exit(1)
+        cassandra_home=os.environ['CASSANDRA_HOME']
+        #cassandra_home=config.cassandraHome
+        if cassandra_home != "":
+                 return cassandra_home
+        else :
+                print "Please set the environment variable CASSANDRA_HOME"
+                sys.exit(1)
 
 def getCassandraDataDir(cassandra_home):
         cassandraConfigFile =  cassandra_home+ "/conf/cassandra.yaml"
@@ -23,62 +26,75 @@ def getCassandraDataDir(cassandra_home):
                 yamlKeyValuePairs = yaml.load(configFile)
         dataFileDirectory = yamlKeyValuePairs["data_file_directories"]
         return dataFileDirectory[0]
-		
-def restoreKeySpace():
-	cassandra_home = getCassandraHome();
-	cassandraDataDir = getCassandraDataDir(cassandra_home)
-	
-	print "Stopping Cassandra..."
-	
-	# Warning Message for Stopping Cassandra, Once User confirm with Y script will continue futher operation
-	length=len(sys.argv)
-	if ( length <=3 ):
-		userInput = raw_input("Do you want to continue [Y/n]?")
-		if userInput == "Y":
-            		print("Cassandra Stopped")
-        	else:
-           		sys.exit(1)
-	os.system("pgrep -f cassandra | xargs kill")
-	
-	commitLogsLocation = "rm -rf " + cassandraDataDir+ "/../commitlog/*"
-	print "Deleting commit logs from " + commitLogsLocation
 
-	# Warning Message for commitlog, Once User confirm with Y script will continue futher operation
-	if ( length <=3 ):	
-		userInput = raw_input("Do you want to continue [Y/n]?")
-		if userInput == "Y":
-	    		print("Deleted commitlog")
-		else:
-	   		sys.exit(1)
-	os.system(commitLogsLocation)
-	
-	keySpaceSSTLocation=cassandraDataDir+"/"+keyspaceName
-	print "Deleting Key Space SST table from " + keySpaceSSTLocation
-	deletSSTTablesCommand = "rm -rf " + keySpaceSSTLocation
-	
-	# Warning Message for Removing Keyspace directory, Once User confirm with Y script will continue futher operation
+def restoreKeySpace():
+        cassandra_home = getCassandraHome();
+        cassandraDataDir = getCassandraDataDir(cassandra_home)
+
+        print "Stopping Cassandra..."
+
+        # Warning Message for Stopping Cassandra, Once User confirm with Y script will continue futher operation
+        length=len(sys.argv)
         if ( length <=3 ):
-		userInput = raw_input("Do you want to continue [Y/n]?")
-        	if userInput == "Y":
-            		print("Deleted Key Space SST table")
-        	else:
-           		sys.exit(1)
-	os.system ( deletSSTTablesCommand)
+                userInput = raw_input("Do you want to continue [Y/n]?")
+                if userInput == "Y":
+                        print("Cassandra Stopped")
+                else:
+                        sys.exit(1)
+        os.system("pgrep -f cassandra | xargs kill")
+
+        commitLogsLocation = "rm -rf " + cassandraDataDir+ "/../commitlog/*"
+        print "Deleting commit logs from " + commitLogsLocation
+
+        # Warning Message for commitlog, Once User confirm with Y script will continue futher operation
+        if ( length <=3 ):
+                userInput = raw_input("Do you want to continue [Y/n]?")
+                if userInput == "Y":
+                        print("Deleted commitlog")
+                else:
+                        sys.exit(1)
+        os.system(commitLogsLocation)
+
+        keySpaceSSTLocation=cassandraDataDir+"/"+keyspaceName+"/"
+        print "Deleting Key Space SST table from " + keySpaceSSTLocation
+        deletSSTTablesCommand = "rm -rf " + keySpaceSSTLocation
+
+        # Warning Message for Removing Keyspace directory, Once User confirm with Y script will continue futher operation
+        if ( length <=3 ):
+                userInput = raw_input("Do you want to continue [Y/n]?")
+                if userInput == "Y":
+                        print("Deleted Key Space SST table")
+                else:
+                        sys.exit(1)
+        os.system ( deletSSTTablesCommand)
+
+        currentContextFolderPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
+
+        s3SnapshotDirectory = "s3://" + bucketName + "/" + nodeName  + "/snapshots/" + keyspaceName +"/"+ restoreFolderName +"/"
+
+        s3RemoteDataSyncCommand = "aws s3 sync " + s3SnapshotDirectory + " " + keySpaceSSTLocation
+
+        print "syncing the backed up content in the local Cassandra folder from:"+s3SnapshotDirectory +" to " +keySpaceSSTLocation
+        os.system(s3RemoteDataSyncCommand)
+	command = "aws s3 ls " + s3SnapshotDirectory
+	columnFamily = os.popen(command).readlines()
+	templist = columnFamily[0].rstrip().split(' ')
+	length_templist = len(templist)
+	cFamily = templist[length_templist-1]
+	pathOfCF = keySpaceSSTLocation + cFamily
+	os.chdir(pathOfCF)
+        	
+	files = filter(path.isfile, os.listdir('.'))	
+	for dbfile in files:
+		unCompressCommand = "tar -zxvf " + dbfile 
+		deleteCompressFile = "rm -f " + dbfile
+		os.system(unCompressCommand)
+		os.system(deleteCompressFile)
 	
-	currentContextFolderPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
-	
-	#s3SnapshotDirectory = "s3://" + config.bucket_name +"/"+config.node_name+"/snapshots/"+keyspaceName+"/"+restoreFolderName+"/"
-	s3SnapshotDirectory = "s3://" + bucketName + "/" + nodeName  + "/snapshots/" + keyspaceName +"/"+ restoreFolderName +"/"
-	
-	s3RemoteDataSyncCommand = currentContextFolderPath+"/boto-rsync.py " + s3SnapshotDirectory + " " + keySpaceSSTLocation
-	
-	print "syncing the backed up content in the local Cassandra folder from:"+s3SnapshotDirectory +" to " +keySpaceSSTLocation
-	os.system(s3RemoteDataSyncCommand)
-	
-	print "Starting Cassandra..."
-	cassadraStartShellCommand=cassandra_home+"/bin/cassandra"
-	os.system(cassadraStartShellCommand);
-	
+        print "Starting Cassandra..."
+        cassadraStartShellCommand=cassandra_home+"/bin/cassandra"
+        os.system(cassadraStartShellCommand);
+
 
 # Get Keyspace
 keyspaceName = sys.argv[1]
@@ -91,3 +107,4 @@ bucketName = "cassandra-backup-dir"
 nodeName = (socket.gethostname())
 
 restoreKeySpace()
+
