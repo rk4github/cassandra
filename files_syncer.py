@@ -2,55 +2,33 @@
 import hashlib
 from files_function import getFilesList
 import sets
+import os
 
-def getHexaMd5Checksum(stringValue):
-	md5 = hashlib.md5()
-	md5.update(stringValue)
-	return md5.hexdigest()
-
-def getMasterFilesListPath(keySpace):
-	masterFilesListPath = "/var/opstree/"+ keySpace +"masterfileslist.meta"
-	return masterFilesListPath
+def getMasterFilesListPath(nodeS3Path,keySpace,columnFamily):
+        masterFilesListPath = "aws s3 ls " + nodeS3Path + "/sync_dir/"+ keySpace + "/" + columnFamily + "/"
+        return masterFilesListPath
 
 #I'll get the list of all the files present in sourceFolder
 def getCurrentFilesList(sourceFolder):
-	currentFilesList = getFilesList(sourceFolder)
-	return currentFilesList
+        currentFilesList = getFilesList(sourceFolder)
+	stringToAdd = '.tar.gz'
+	my_new_list = [x + stringToAdd for x in currentFilesList]
+        return my_new_list
 
 #I'll provide master list of files corresponding to sourceFolder
-def getMasterFilesList(sourceFolder,keySpace):
-	masterFilesListPath = getMasterFilesListPath(keySpace)
-	file = open(masterFilesListPath, 'r')
+def getMasterFilesList(nodeS3Path,keySpace,columnFamily):
+        masterFilesListPath = getMasterFilesListPath(nodeS3Path,keySpace,columnFamily)
+        filesInS3SyncDir = os.popen(masterFilesListPath).readlines()
+	fileList = []
+        for files in filesInS3SyncDir:
+                fileName=files.split(' ')
+                length = len(fileName)
+		fileList.append(fileName[length-1].rstrip())
+        return fileList
+		
+def getListOfDeletedFiles(sourceFolder,keySpace,nodeS3Path,columnFamily):
+        return set(getMasterFilesList(nodeS3Path,keySpace,columnFamily)) - set(getCurrentFilesList(sourceFolder))
 
-	fileNames = []
-	for fileName in file:
-		#print fileName,
-		fileNames.append(fileName.rstrip())
-	return fileNames
-	
-
-#I'll update the master list of files corresponding to source folder
-def updateMasterFilesList(sourceFolder,keySpace ):
-	currentFilesList = getCurrentFilesList(sourceFolder)
-	masterFilesListPath = getMasterFilesListPath(keySpace)
-	print "Re creating masterFilesListPath: " + masterFilesListPath
-	mastersFileList = open(masterFilesListPath, 'w')
-	for fileName in currentFilesList:
-		mastersFileList.write(fileName + "\n")
-	mastersFileList.close()
-
-def getListOfDeletedFiles(sourceFolder,keySpace):
-	return set(getMasterFilesList(sourceFolder, keySpace)) - set(getCurrentFilesList(sourceFolder))
-
-def getNewlyAddedFiles(sourceFolder,keySpace):
-	return set(getCurrentFilesList(sourceFolder)) - set(getMasterFilesList(sourceFolder, keySpace))
-
-#sourceFolder = '/var/lib/cassandra/data/demo2/location/snapshots/1438427551883'
-#updateMasterFilesList(sourceFolder )
-
-#for files in getNewlyAddedFiles(sourceFolder):
-#	print (files)
-
-
-
+def getNewlyAddedFiles(sourceFolder,keySpace,nodeS3Path,columnFamily):
+        return set(getCurrentFilesList(sourceFolder)) - set(getMasterFilesList(nodeS3Path,keySpace,columnFamily))
 

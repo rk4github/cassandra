@@ -13,10 +13,10 @@ import config
 import yaml
 import ntpath
 import socket
-from files_syncer import updateMasterFilesList
+#from files_syncer import updateMasterFilesList
 from files_syncer import getNewlyAddedFiles
 from files_syncer import getListOfDeletedFiles
-
+from files_syncer import getMasterFilesList
 
 # Get Keyspace
 KEYSPACE = sys.argv[1]
@@ -52,7 +52,7 @@ call([NODETOOL, "snapshot", "-t", snapshot, KEYSPACE])
 
 # Get Snapshots Lists
 snapshotsDirList = cassandraDataDir()+"/"+KEYSPACE+"/*/snapshots/"+snapshot
-print snapshotsDirList
+#print snapshotsDirList
 
 keyspacePath = cassandraDataDir()+"/"+KEYSPACE
 
@@ -72,45 +72,32 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
 
         s3SyncDir = nodeS3Path + "/sync_dir/"+KEYSPACE + "/"+columnFamily
 
-
-        #s3SyncMetaInfo = snapshot + " " + KEYSPACE + " " + nodeS3Path + "/sync_dir/"
-
-        #with open("metadata", "a") as myfile:
-        #        myfile.write(s3SyncMetaInfo + "\n")
-		
-        for files in getNewlyAddedFiles(snapshotDirColumnFamilyPath, KEYSPACE):
+        for files in getNewlyAddedFiles(snapshotDirColumnFamilyPath, KEYSPACE,nodeS3Path,columnFamily):
                 os.chdir(snapshotDirColumnFamilyPath)
-
-                if os.path.isfile(files):
-                        compressCommand = "tar -czf "+files+".tar.gz "+files
+		fileName = files.split('.tar.gz')[0]
+                if os.path.isfile(fileName):
+                        compressCommand = "tar -czf "+files+" "+fileName
                         os.system(compressCommand)
-                fileName = files + ".tar.gz"
-                s3SyncCommand = "aws s3 cp "+ fileName + " " + s3SyncDir + "/" + fileName
+                s3SyncCommand = "aws s3 cp "+ files + " " + s3SyncDir + "/" + files
                 print "Syncing Differential Snapshot: <Local-2-S3>"
                 print (files)
                 print "Executing: " + s3SyncCommand + " to sync snapshot of keyspace " + KEYSPACE + " for cloumn family " + columnFamily
                 os.system(s3SyncCommand)
-		
-	for files in getListOfDeletedFiles(snapshotDirColumnFamilyPath, KEYSPACE):
-		fileName = files + ".tar.gz"
-		s3RemoveCommand = "aws s3 rm " + s3SyncDir + "/" + fileName
-		print "Removing deleted Files: <From-S3>"
-		print (files)
-		print "Executing: " + s3RemoveCommand + " to Remove Deleted of Files From " + KEYSPACE + " for cloumn family " + columnFamily
-		os.system(s3RemoveCommand)
-				
-	updateMasterFilesList(snapshotDirColumnFamilyPath,KEYSPACE )
+
+        for files in getListOfDeletedFiles(snapshotDirColumnFamilyPath, KEYSPACE,nodeS3Path,columnFamily):
+                s3RemoveCommand = "aws s3 rm " + s3SyncDir + "/" + files
+                print "Removing deleted Files: <From-S3>"
+                print (files)
+                print "Executing: " + s3RemoveCommand + " to Remove Deleted of Files From " + KEYSPACE + " for cloumn family " + columnFamily
+                os.system(s3RemoveCommand)
+
         os.chdir(PATH)
 
         s3SnapshotDirectory = nodeS3Path + "/snapshots/"+KEYSPACE+"/"+s3Snapshot+"/"+columnFamily
         s3RemoteCopyCommand = "aws s3 sync " + s3SyncDir + " " + s3SnapshotDirectory
 
-        #metaFileUpdateCommand = PATH + "/boto-rsync.py metadata " + nodeS3Path + "/snapshots/" + KEYSPACE + "/metadata"
-
         print "Creating Snapshot: <S3-3-S3>"
         print "Executing s3 remote copy command : " + s3RemoteCopyCommand
-        #print "Executing Metadata upload command : " + metaFileUpdateCommand
-
+        
         os.system(s3RemoteCopyCommand)
-        #os.system(metaFileUpdateCommand)
-
+        
