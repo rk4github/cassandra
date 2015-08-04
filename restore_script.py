@@ -76,20 +76,22 @@ def restoreKeySpace():
 
         print "syncing the backed up content in the local Cassandra folder from:"+s3SnapshotDirectory +" to " +keySpaceSSTLocation
         os.system(s3RemoteDataSyncCommand)
-	command = "aws s3 ls " + s3SnapshotDirectory
-	columnFamily = os.popen(command).readlines()
-	templist = columnFamily[0].rstrip().split(' ')
-	length_templist = len(templist)
-	cFamily = templist[length_templist-1]
-	pathOfCF = keySpaceSSTLocation + cFamily
-	os.chdir(pathOfCF)
-        	
-	files = filter(path.isfile, os.listdir('.'))	
-	for dbfile in files:
-		unCompressCommand = "tar -zxvf " + dbfile 
-		deleteCompressFile = "rm -f " + dbfile
-		os.system(unCompressCommand)
-		os.system(deleteCompressFile)
+	
+	
+	
+	toGetCFListCommand = "aws s3 ls " + s3SnapshotDirectory
+	columnFamilies = os.popen(toGetCFListCommand).readlines()
+	for CF in columnFamilies:
+		columnFamily = CF.split()[1]
+		pathOfColumnFamily = keySpaceSSTLocation + columnFamily
+		os.chdir(pathOfColumnFamily)
+		
+		files = filter(path.isfile, os.listdir('.'))	
+		for dbfile in files:
+			unCompressCommand = "tar -zxvf " + dbfile 
+			deleteCompressFile = "rm -f " + dbfile
+			os.system(unCompressCommand)
+			os.system(deleteCompressFile)
 	
         print "Starting Cassandra..."
         cassadraStartShellCommand=cassandra_home+"/bin/cassandra"

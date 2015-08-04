@@ -82,8 +82,10 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
                 print "Syncing Differential Snapshot: <Local-2-S3>"
                 print (files)
                 print "Executing: " + s3SyncCommand + " to sync snapshot of keyspace " + KEYSPACE + " for cloumn family " + columnFamily
-                os.system(s3SyncCommand)
-
+                removeCompressedFiles = "rm -f "+ files
+		os.system(s3SyncCommand)
+		os.system(removeCompressedFiles)
+		
         for files in getListOfDeletedFiles(snapshotDirColumnFamilyPath, KEYSPACE,nodeS3Path,columnFamily):
                 s3RemoveCommand = "aws s3 rm " + s3SyncDir + "/" + files
                 print "Removing deleted Files: <From-S3>"
