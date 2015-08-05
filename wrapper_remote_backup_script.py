@@ -21,7 +21,7 @@ inputListOfIPAddress = input('Please provide nodes list comma separated values o
 for ipAddress in inputListOfIPAddress.split(','):
 	command = "source /etc/profile;nohup python "+getAction+" "+keyspaceName+ " </dev/null >backup.log 2>&1 &"
 	ssh_cmd = "ssh "+ipAddress+" "+'"%s"'%command
-	scpCommand = "scp backup.py " + ipAddress + ":/opt/"
+	scpCommand = "scp backup.py files_syncer.py files_function.py " + ipAddress + ":/opt/"
 	print scpCommand
 	print ssh_cmd
 	os.system(scpCommand)
