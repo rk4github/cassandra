@@ -28,7 +28,7 @@ def sendFileGz(bucket, key, fileName, suffix='.gz'):
 
 connection = boto.connect_s3()
 bucketName = connection.get_bucket('cassandra-backup-dir') 
-#fileNameAfterUpload = 'README.md'
-#fileNameBeforeUpload = 'README.md'
+fileNameAfterUpload = 'README.md'
+fileNameBeforeUpload = 'README.md'
 sendFileGz(bucketName,fileNameAfterUpload,fileNameBeforeUpload)
 
