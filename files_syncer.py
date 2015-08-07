@@ -11,9 +11,7 @@ def getMasterFilesListPath(nodeS3Path,keySpace,columnFamily):
 #I'll get the list of all the files present in sourceFolder
 def getCurrentFilesList(sourceFolder):
         currentFilesList = getFilesList(sourceFolder)
-	stringToAdd = '.tar.gz'
-	my_new_list = [x + stringToAdd for x in currentFilesList]
-        return my_new_list
+        return currentFilesList
 
 #I'll provide master list of files corresponding to sourceFolder
 def getMasterFilesList(nodeS3Path,keySpace,columnFamily):
