@@ -78,8 +78,8 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
         columnFamily=b.split("/")[2]
 
         s3SyncDir = nodeS3Path + "/sync_dir/"+KEYSPACE + "/"+columnFamily
-
-        for files in getNewlyAddedFiles(snapshotDirColumnFamilyPath, KEYSPACE,nodeS3Path,columnFamily):
+	syncDir = 'sync_dir'
+        for files in getNewlyAddedFiles(snapshotDirColumnFamilyPath,syncDir,KEYSPACE,nodeS3Path,columnFamily):
                 os.chdir(snapshotDirColumnFamilyPath)
                 s3SyncCommand = "aws s3 cp "+ files + " " + s3SyncDir + "/" + files
                 print "Syncing Differential Snapshot: <Local-2-S3>"
@@ -87,11 +87,11 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
                 print "Executing: " + s3SyncCommand + " to sync snapshot of keyspace " + KEYSPACE + " for cloumn family " + columnFamily
 		#os.system(s3SyncCommand)
 		
-        for files in getListOfDeletedFiles(snapshotDirColumnFamilyPath, KEYSPACE,nodeS3Path,columnFamily):
+        for files in getListOfDeletedFiles(snapshotDirColumnFamilyPath,syncDir,KEYSPACE,nodeS3Path,columnFamily):
                 s3RemoveCommand = "aws s3 rm " + s3SyncDir + "/" + files
                 print "Removing deleted Files: <From-S3>"
                 print (files)
-                print "Executing: " + s3RemoveCommand + " to Remove Deleted of Files From " + KEYSPACE + " for cloumn family " + columnFamily
+                print "Executing: " + s3RemoveCommand + " to Deleted of Files From " + KEYSPACE + " for cloumn family " + columnFamily
                 #os.system(s3RemoveCommand)
         os.chdir(PATH)
 
@@ -107,13 +107,18 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
 	incrementalBackupSyncDir = nodeS3Path + "/incrementalBackupSyncDir/" + KEYSPACE + "/" + columnFamily
         incrementalBackup = nodeS3Path + "/incrementalBackup/" + KEYSPACE + "/" + s3Snapshot + "/" + columnFamily 
 	incrementalBackupDirCommand = "aws s3 sync " + incrementalBackupSyncDir + " " + incrementalBackup
-	cleanIncrementalBackupSyncDir = "aws s3 ls " + nodeS3Path + "/incrementalBackupSyncDir/" + KEYSPACE + "/" + columnFamily
-	print incrementalBackupSyncDir
-	print incrementalBackup
-	print incrementalBackupDirCommand
-	print cleanIncrementalBackupSyncDir	
+	cleanIncrementalBackupSyncDir = "aws s3 ls " + nodeS3Path + "/incrementalBackupSyncDir/" + KEYSPACE + "/" + columnFamily + "/"
+	print "Creating Incremental Backup: <S3-2-S3>"
+	print "Executing: " + incrementalBackupDirCommand + " to clean incremental sync directory for " + KEYSPACE + "/" + columnFamily 
 	os.system(incrementalBackupDirCommand)
-	#for files in cleanIncrementalBackupSyncDir:
-	#	removeFiles = "aws s3 rm " + incrementalBackupSyncDir + "/" + files
-	#	print removeFiles
+
+	filesInS3SyncDir = os.popen(cleanIncrementalBackupSyncDir).readlines()
+
+	for files in filesInS3SyncDir:
+                fileName=files.split(' ')
+                length = len(fileName)
+		removeFiles = "aws s3 rm " + incrementalBackupSyncDir + "/" + fileName[length-1].rstrip()
+		print fileName[length-1].rstrip()
 		#os.system(removeFiles)
+
+
