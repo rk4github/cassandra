@@ -11,6 +11,11 @@ from boto.exception import S3ResponseError
 import config
 import yaml
 import ntpath
+from files_syncer import getNewlyAddedFiles
+from files_syncer import getListOfDeletedFiles
+from files_syncer import getMasterFilesList
+import socket
+
 
 # Get Keyspace
 KEYSPACE = sys.argv[1]
@@ -23,12 +28,12 @@ cassandraHome = config.cassandraHome
 
 # Get cassandraDataDir
 def cassandraDataDir():
-	cassandraConfigFile =  cassandraHome+"/conf/cassandra.yaml"
-	with open(cassandraConfigFile, 'r') as f:
-		keys = yaml.load(f)
-	dataFileDirectory = keys["data_file_directories"]
+        cassandraConfigFile =  cassandraHome+"/conf/cassandra.yaml"
+        with open(cassandraConfigFile, 'r') as f:
+                keys = yaml.load(f)
+        dataFileDirectory = keys["data_file_directories"]
         return dataFileDirectory[0]
-	
+
 NODETOOL = cassandraHome +'/bin/nodetool'
 # timeStamp format
 timeStamp = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H')
@@ -45,30 +50,22 @@ incrementalBackUpColumnFamilyPaths = glob(incrementalBackUpList)
 # Get Current working directory
 PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
 
-nodeS3Path = "s3://"+config.bucket_name+"/"+config.node_name
+bucketName = "cassandra-backup-dir"
+nodeName = (socket.gethostname())
+nodeS3Path = "s3://"+bucketName+"/"+nodeName
+
 for incrementalColumnFamilyPath in incrementalBackUpColumnFamilyPaths:
-	keyspacePath=incrementalColumnFamilyPath.split("/backups")[0]
-	b=keyspacePath.split(cassandraDataDir())[1]
+        keyspacePath=incrementalColumnFamilyPath.split("/backups")[0]
+        b=keyspacePath.split(cassandraDataDir())[1]
 
-	columnFamily=b.split("/")[2]
-	s3SyncDir = nodeS3Path + "/" + config.sync_dir + "/"+KEYSPACE + "/incrementalBackup/"+columnFamily
-	s3SyncCommand = PATH+"/boto-rsync.py "+incrementalColumnFamilyPath+" " + s3SyncDir
-	
-	s3SyncMetaInfo = timeStamp + " " + KEYSPACE + " " + nodeS3Path + "/"+config.sync_dir + "/"
-	
-	with open("metadata", "a") as myfile:
-		myfile.write(s3SyncMetaInfo + "\n")
-	print "Syncing Differential incrementalBackup: <Local-2-S3>"
-	print "Executing: " + s3SyncCommand + " to sync incrementalBackup of keyspace " + KEYSPACE + " for cloumn family " + columnFamily
-	os.system(s3SyncCommand)
-
-	s3incrementalBackupDirectory = nodeS3Path + "/incrementalBackup/"+KEYSPACE+"/"+timeStamp+"/"+columnFamily
-	s3RemoteCopyCommand = PATH+"/boto-rsync.py " + s3SyncDir + " " + s3incrementalBackupDirectory
-
-    	metaFileUpdateCommand = PATH + "/boto-rsync.py metadata " + nodeS3Path + "/incrementalBackup/" + KEYSPACE + "/metadata"
-
-    	print "Creating incrementalBackup: <S3-2-S3>"
-	print "Executing s3 remote copy command : " + s3RemoteCopyCommand
-	print "Executing Metadata upload command : " + metaFileUpdateCommand
-	os.system(s3RemoteCopyCommand)
-    	os.system(metaFileUpdateCommand)
+        columnFamily=b.split("/")[2]
+	syncDir = 'incrementalBackupSyncDir'
+	incrementalBackupSyncDir = nodeS3Path + "/" + syncDir + "/" + KEYSPACE + "/" + columnFamily
+        
+	for files in getNewlyAddedFiles(incrementalColumnFamilyPath,syncDir,KEYSPACE,nodeS3Path,columnFamily):
+                os.chdir(incrementalColumnFamilyPath)
+                s3SyncCommand = "aws s3 cp "+ files + " " + incrementalBackupSyncDir + "/" + files
+                print "Syncing Differential Incremental Backup: <Local-2-S3>"
+                print (files)
+                print "Executing: " + s3SyncCommand + " to sync incremental backup of keyspace " + KEYSPACE + " for cloumn family " + columnFamily
+                os.system(s3SyncCommand)
