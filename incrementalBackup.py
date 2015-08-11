@@ -39,13 +39,13 @@ NODETOOL = cassandraHome +'/bin/nodetool'
 timeStamp = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H')
 
 # Create Incremental Backup for keyspaces
-print 'Creating Incremental Backup For ' + KEYSPACE + '..........'
+print 'Creating Incremental Backup For ' + KEYSPACE + ' ..........'
 call([NODETOOL, "flush", KEYSPACE])
 
 # Get Incremental Backup Lists
-incrementalBackUpList = cassandraDataDir()+"/"+KEYSPACE+"/*/backups/"
+incrementalBackUpList = cassandraDataDir() + "/" + KEYSPACE + "/*/backups/"
 print incrementalBackUpList
-keyspacePath = cassandraDataDir()+"/"+KEYSPACE
+keyspacePath = cassandraDataDir() + "/" + KEYSPACE
 incrementalBackUpColumnFamilyPaths = glob(incrementalBackUpList)
 # Get Current working directory
 PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
