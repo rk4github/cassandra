@@ -8,7 +8,9 @@ import config
 import inspect
 import socket
 from os import path
-
+from findRestoreSnapshot import getDateTimeObjectToString
+from findRestoreSnapshot import getListOfRestorePoint
+from findRestoreSnapshot import getDateObjectFromString
 
 # Get CASSANDRA_HOME
 def getCassandraHome():
@@ -69,32 +71,31 @@ def restoreKeySpace():
         os.system ( deletSSTTablesCommand)
 
         currentContextFolderPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
-
-        s3SnapshotDirectory = "s3://" + bucketName + "/" + nodeName  + "/snapshots/" + keyspaceName +"/"+ restoreFolderName +"/"
-
+		
+	# Download Snapshot 
+        s3SnapshotDirectory = "s3://" + bucketName + "/" + nodeName  + "/snapshots/" + keyspaceName + "/" + lastSnapshot + "/"
         s3RemoteDataSyncCommand = "aws s3 sync " + s3SnapshotDirectory + " " + keySpaceSSTLocation
-
-        print "syncing the backed up content in the local Cassandra folder from:"+s3SnapshotDirectory +" to " +keySpaceSSTLocation
+	print "Downloading backed up (Snapshots + Incremental) content in the local Cassandra folder from:"+ s3SnapshotDirectory + " to " + keySpaceSSTLocation
         os.system(s3RemoteDataSyncCommand)
 	
+	# Download Incremental Backup
 	
-	
-	toGetCFListCommand = "aws s3 ls " + s3SnapshotDirectory
-	columnFamilies = os.popen(toGetCFListCommand).readlines()
-	for CF in columnFamilies:
-		columnFamily = CF.split()[1]
-		pathOfColumnFamily = keySpaceSSTLocation + columnFamily
-		os.chdir(pathOfColumnFamily)
-		
-		files = filter(path.isfile, os.listdir('.'))	
-		for dbfile in files:
-			unCompressCommand = "tar -zxvf " + dbfile 
-			deleteCompressFile = "rm -f " + dbfile
-			os.system(unCompressCommand)
-			os.system(deleteCompressFile)
+	s3IncrementalDir = "s3://" + bucketName + "/" + nodeName  + "/incrementalBackup/" + keyspaceName + "/" + lastSnapshot + "/"
+	s3IncrementalDirList = "aws s3 ls " + s3IncrementalDir
+	columnFamiliesList = os.popen(s3IncrementalDirList).readlines()
+        for CF in columnFamiliesList:
+               	s3ColumnFamilyPath = s3IncrementalDirList + CF.rstrip('/').split()[1]
+		filesInColumnFamily = os.popen(s3ColumnFamilyPath).readlines()
+		for files in filesInColumnFamily:
+			fileName=files.split(' ')
+			length = len(fileName)
+			print fileName[length-1].rstrip()
+			downloadIncrementalBackup = "aws s3 cp " + s3ColumnFamilyPath + "/" + fileName[length-1].rstrip() + " " + keySpaceSSTLocation + "/" + CF.rstrip('/').split()[1]
+			os.system(downloadIncrementalBackup)
+
 	
         print "Starting Cassandra..."
-        cassadraStartShellCommand=cassandra_home+"/bin/cassandra"
+        cassadraStartShellCommand=cassandra_home + "/bin/cassandra"
         os.system(cassadraStartShellCommand);
 
 
@@ -107,6 +108,13 @@ if keyspaceName == "":
 
 bucketName = "cassandra-backup-dir"
 nodeName = (socket.gethostname())
+nodeS3Path = "s3://" + bucketName + "/" + nodeName
+# List last snapshot
+def listLastSnapshot():
+        listOfRestorePointInDateTimeObject = getDateObjectFromString(getListOfRestorePoint(nodeS3Path,keyspaceName))
+        getSnapshots = getDateTimeObjectToString(listOfRestorePointInDateTimeObject,restoreFolderName)
+        return getSnapshots
+lastSnapshot = listLastSnapshot()
 
 restoreKeySpace()
 
