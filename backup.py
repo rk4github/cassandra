@@ -48,6 +48,8 @@ NODETOOL = cassandraHome +'/bin/nodetool'
 # Snapshot format
 s3Snapshot = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d')
 snapshot = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H%M%S')
+# Clear Previous Snapshots
+call([NODETOOL, "clearsnapshot", KEYSPACE])
 
 # Create snapshots for all keyspaces
 print 'Creating Snapshots For ' + KEYSPACE + ' at ' + snapshot + '..........'
@@ -66,11 +68,11 @@ nodeName = (socket.gethostname())
 nodeS3Path = "s3://"+bucketName+"/"+nodeName
 
 # List last snapshot
-#def listLastSnapshot():
-#        listOfRestorePointInDateTimeObject = getDateObjectFromString(getListOfRestorePoint(nodeS3Path,KEYSPACE))
-#        getSnapshots = getDateTimeObjectToString(listOfRestorePointInDateTimeObject,s3Snapshot)
-#        return getSnapshots
-#lastSnapshot = listLastSnapshot()
+def listLastSnapshot():
+        listOfRestorePointInDateTimeObject = getDateObjectFromString(getListOfRestorePoint(nodeS3Path,KEYSPACE))
+        getSnapshots = getDateTimeObjectToString(listOfRestorePointInDateTimeObject,s3Snapshot)
+        return getSnapshots
+lastSnapshot = listLastSnapshot()
 
 for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
         keyspacePath=snapshotDirColumnFamilyPath.split("/snapshots")[0]
@@ -85,27 +87,28 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
                 print "Syncing Differential Snapshot: <Local-2-S3>"
                 print (files)
                 print "Executing: " + s3SyncCommand + " to sync snapshot of keyspace " + KEYSPACE + " for cloumn family " + columnFamily
-		#os.system(s3SyncCommand)
+		os.system(s3SyncCommand)
 		
         for files in getListOfDeletedFiles(snapshotDirColumnFamilyPath,syncDir,KEYSPACE,nodeS3Path,columnFamily):
                 s3RemoveCommand = "aws s3 rm " + s3SyncDir + "/" + files
                 print "Removing deleted Files: <From-S3>"
                 print (files)
                 print "Executing: " + s3RemoveCommand + " to Deleted of Files From " + KEYSPACE + " for cloumn family " + columnFamily
-                #os.system(s3RemoveCommand)
+                os.system(s3RemoveCommand)
         os.chdir(PATH)
 
-        #s3SnapshotDirectory = nodeS3Path + "/snapshots/"+KEYSPACE+"/"+s3Snapshot+"/"+columnFamily
-        #s3RemoteCopyCommand = "aws s3 sync " + s3SyncDir + " " + s3SnapshotDirectory
-        #print "Creating Snapshot: <S3-3-S3>"
-        #print "Executing s3 remote copy command : " + s3RemoteCopyCommand
+        s3SnapshotDirectory = nodeS3Path + "/snapshots/"+KEYSPACE+"/"+s3Snapshot+"/"+columnFamily
+        s3RemoteCopyCommand = "aws s3 sync " + s3SyncDir + " " + s3SnapshotDirectory
+        print "Creating Snapshot: <S3-3-S3>"
+        print "Executing s3 remote copy command : " + s3RemoteCopyCommand
         
-        #os.system(s3RemoteCopyCommand)
+        os.system(s3RemoteCopyCommand)
 
 
 	# List last snapshot
 	incrementalBackupSyncDir = nodeS3Path + "/incrementalBackupSyncDir/" + KEYSPACE + "/" + columnFamily
-        incrementalBackup = nodeS3Path + "/incrementalBackup/" + KEYSPACE + "/" + s3Snapshot + "/" + columnFamily 
+        #incrementalBackup = nodeS3Path + "/incrementalBackup/" + KEYSPACE + "/" + s3Snapshot + "/" + columnFamily 
+	incrementalBackup = nodeS3Path + "/incrementalBackup/" + KEYSPACE + "/" + lastSnapshot + "/" + columnFamily
 	incrementalBackupDirCommand = "aws s3 sync " + incrementalBackupSyncDir + " " + incrementalBackup
 	cleanIncrementalBackupSyncDir = "aws s3 ls " + nodeS3Path + "/incrementalBackupSyncDir/" + KEYSPACE + "/" + columnFamily + "/"
 	print "Creating Incremental Backup: <S3-2-S3>"
@@ -119,6 +122,6 @@ for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
                 length = len(fileName)
 		removeFiles = "aws s3 rm " + incrementalBackupSyncDir + "/" + fileName[length-1].rstrip()
 		print fileName[length-1].rstrip()
-		#os.system(removeFiles)
+		os.system(removeFiles)
 
 
