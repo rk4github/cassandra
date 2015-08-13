@@ -42,7 +42,7 @@ Hecuba takes `Keyspace` as user input & triggers `flush` against provided `Keysp
 
 ```bash
 # Trigger Backup ( i.e. <hecuba.py> <backup> <Keyspace> )
-$ python hecuba.py backup demo
+$ python hecuba.py incremental  demo
 
 Note : nodes log can be found at <nodes>/root/backup.log
 ```
