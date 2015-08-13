@@ -1,7 +1,10 @@
 # Hecuba
-A utility to backup cassandra node using snapshots & incremental backups to Amazon S3.
+A utility to backup Cassandra node using snapshots & incremental backups to Amazon S3.
 
-The objective of the project to make DBA, system admin & DevOps life easier into `Snapshotting`, `Incremental Backup` and `Restoring` cassandra.
+The objective of the project to make DBA, system admin & DevOps life easier into `Snapshotting`, `Incremental Backup` and `Restoring` Cassandra.
+
+This utility is made under keeping in mind of huge database (more then 500 GB), first time utility uploads entire snapshot afterwords only upload differential snapshot. Utility works to minimize load on system & for faster result.
+This is achieved after using differential calculation, utility compares generated snapshot with available snapshot in s3 (sync_dir) if gets difference upload back to s3, after syncing differences to s3, create snapshot accordingly.
 
 #### Prerequisites
 ```bash
@@ -22,46 +25,37 @@ $ aws --version
 
 ## Getting Started 
 
-### Cassandra Backup :
-##### Single-node
-[backup.py] - Backup script will take `Keyspace` as user input & triggers `Snapshot` against provided `Keyspace`. Once snapshot is created, backup script uses [files_function.py] & [files_syncer.py] for getting differentials files from last `Snapshot` to current `Snapshot`, Newly added files uploaded to S3 & deleted files removed from S3. Here `aws-cli` is being used for uploading files.
+### Snapshot :
+Hecuba takes `Keyspace` as user input & triggers `Snapshot` against provided `Keyspace`. Before triggering snapshot ask for list of nodes on which backup will be triggers, user need to provide IP(s), those nodes require password-less login & prerequisites to be install otherwise backup fail. once get list of nodes, utility copy require scripts on those nodes and triggers snapshots in parallel & upload to s3. Here `aws-cli` is being used for uploading files.
+
 
 ```bash
-# Trigger Backup ( i.e. <script> <keyspace> )
-$ python backup.py demo
+# Trigger Backup ( i.e. <hecuba.py> <backup> <Keyspace> )
+$ python hecuba.py backup demo
+
+Note : nodes log can be found at <nodes>/root/backup.log
 ```
 
-##### Remote
-
-[wrapper_remote_backup_script.py] - Remote backup script also takes `Keyspace` as user input & triggers `Snapshot` against provided `Keyspace` but will show list of available nodes on which backup will be triggers, user need to choose IP(s) from shown list or add any not provided node IP but those nodes require password-less login & prerequisites to be install otherwise backup fail. Once backup triggered, wrapper script copy require scripts on those nodes and triggers backup in parallel.
-
+### Incremental Backup : 
+Hecuba takes `Keyspace` as user input & triggers `flush` against provided `Keyspace`. Before triggering `flush` ask for list of nodes on which incremental backup will be triggers, user need to provide IP(s), those nodes require password-less login & prerequisites to be install otherwise incremental backup fail. once get list of nodes, utility copy require scripts on those nodes and triggers incremental backup in parallel & upload to s3. Here `aws-cli` is being used for uploading files.
 
 
 ```bash
-# Trigger Backup ( i.e. <script> <backup> <Keyspace> )
-$ python wrapper_remote_backup_script.py backup demo
+# Trigger Backup ( i.e. <hecuba.py> <backup> <Keyspace> )
+$ python hecuba.py backup demo
 
 Note : nodes log can be found at <nodes>/root/backup.log
 ```
 
 
-### Cassandra Restore :
-##### Single-node
-[restore_script.py] - Restore script will take `Keyspace` & `Restore_Point` as user input & user confirmation for stopping, deleting keyspace, after confirmation, triggers restore against provided Keyspace. Here aws-cli is being used for downloading files.
 
-```bash
-# Trigger Restore ( i.e. <script> <keyspace> <restore_point> )
-$ python backup.py demo 20150810
-```
-
-[wrapper_remote_restore_script.py] - Remote restore script also takes `Keyspace` & `Restore_Point` as user input but will show list of available nodes on which restore will be triggers, user need to choose IP(s) from shown list or add any not provided IP but those nodes require password-less login & prerequisites to be install otherwise restore fail. Restore need user confirmation for stopping, deleting keyspace, after confirmation, script triggers restore against provided Keyspace. Here `aws-cli` is being used for downloading files.
+### Restore :
+Hecuba takes `Keyspace` & `Restore_Point` as user input & ask for list of nodes on which restore will be triggers, user need to provide IP(s), those nodes require password-less login & prerequisites to be install otherwise restore fail. Restore need user confirmation for stopping cassandra, deleting keyspace, after confirmation, script triggers restore against provided Keyspace. `Restore_point` will match with closest snapshot + incremental Backup. Here `aws-cli` is being used for downloading files.
 
 ```bash
 # Trigger Backup ( i.e. <script> <restore> <Keyspace> <restore_point>)
-$ python wrapper_remote_backup_script.py restore demo 20150810
+$ python hecuba.py restore demo 20150810
 
 Note : nodes log can be found at <nodes>/root/restore.log
 ```
-
-
 
