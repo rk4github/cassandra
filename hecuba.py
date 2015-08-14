@@ -11,8 +11,6 @@ config = ConfigParser.ConfigParser()
 config.readfp(open(r'server.properties'))
 listOfIPAddress = config.get('servers', 'ip').split(",")
 getAction = config.get('servers', action)
-print "List of Nodes"
-print listOfIPAddress
 inputListOfIPAddress = input('Please provide nodes list comma separated values of node: i.e. "10.24.1.20,10.24.1.21"\n')
 
 for ipAddress in inputListOfIPAddress.split(','):
