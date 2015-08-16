@@ -1,10 +1,11 @@
 # Hecuba
 Hecuba is a highly optimized utility that takes care of multi node backup and restore using Amazon S3 as the storage container.
 
-#Features
+## Features
 1. Take full snapshot - Passes only the incremental changes to S3, reduces the data transfer over network.
 2. Take incremental backups - Supports incremental backups and again reduces data tranfer by selectively transferring diffs.
 3. Restore - Can restore to any given time using the full snapshots and relevant incremental backup.
+4. List all available snapshots.
 
 This utility is designed to handle huge database sizes (and has beed tested to the tune of 500 GB). Utility works to minimize load on system & for faster result.
 
