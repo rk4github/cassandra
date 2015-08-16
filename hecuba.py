@@ -39,23 +39,23 @@ def restore(ipAddress,absoluteScriptPath):
 def performAction(inputListOfIPAddress,action,absoluteScriptPath):
 	for ipAddress in inputListOfIPAddress.split(','):
 	# Conditional execution for Snapshots, Incremental Backup & Restore
-	if action == 'backup':
-		createBackup(ipAddress,absoluteScriptPath)
-	else:
-		if action == 'incremental':
-			createIncrementalBackup(ipAddress,absoluteScriptPath)
+		if action == 'backup':
+			createBackup(ipAddress,absoluteScriptPath)
 		else:
-			if sys.argv[1] == 'restore':
-				restore(ipAddress,absoluteScriptPath)
+			if action == 'incremental':
+				createIncrementalBackup(ipAddress,absoluteScriptPath)
 			else:
-				print "Please provide valid action to perform: " + action
+				if sys.argv[1] == 'restore':
+					restore(ipAddress,absoluteScriptPath)
+				else:
+					print "Please provide valid action to perform: " + action
 
 
 #User Interraction and script execution begins from here
 action=sys.argv[1]
 config = ConfigParser.ConfigParser()
-listOfIPAddress = config.get('servers', 'ip').split(",")
 config.readfp(open(r'server.properties'))
+listOfIPAddress = config.get('servers', 'ip').split(",")
 absoluteScriptPath = config.get('servers', action)
 print "List of Nodes"
 print listOfIPAddress
