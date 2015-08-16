@@ -33,8 +33,10 @@ except KeyError:
    print "Please set the environment variable CASSANDRA_HOME"
    sys.exit(1)
 
+NODETOOL = cassandraHome +'/bin/nodetool'   
+
 # Get cassandraDataDir
-def cassandraDataDir():
+def getCassandraDataDir():
         cassandraConfigFile =  cassandraHome+"/conf/cassandra.yaml"
 
         with open(cassandraConfigFile, 'r') as f:
@@ -43,22 +45,22 @@ def cassandraDataDir():
         dataFileDirectory = keys["data_file_directories"]
         return dataFileDirectory[0]
 
-NODETOOL = cassandraHome +'/bin/nodetool'
+
 
 # Snapshot format
-s3Snapshot = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d')
+s3SnapshotFolderName = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d')
 snapshot = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H%M%S')
-# Clear Previous Snapshots
+# Clear Previous Snapshots for the provided keyspace
 call([NODETOOL, "clearsnapshot", KEYSPACE])
 
-# Create snapshots for all keyspaces
+# Create snapshots for provided keyspace
 print 'Creating Snapshots For ' + KEYSPACE + ' at ' + snapshot + '..........'
 call([NODETOOL, "snapshot", "-t", snapshot, KEYSPACE])
 
 # Get Snapshots Lists
-snapshotsDirList = cassandraDataDir()+"/"+KEYSPACE+"/*/snapshots/"+snapshot
-keyspacePath = cassandraDataDir()+"/"+KEYSPACE
-snapshotDirColumnFamilyPaths = glob(snapshotsDirList)
+expressionForSnapshotsDirList = getCassandraDataDir()+"/"+KEYSPACE+"/*/snapshots/"+snapshot
+keyspacePath = getCassandraDataDir()+"/"+KEYSPACE
+snapshotDirColumnFamilyPaths = glob(expressionForSnapshotsDirList)
 
 # Get Current working directory
 PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
@@ -70,13 +72,13 @@ nodeS3Path = "s3://"+bucketName+"/"+nodeName
 # List last snapshot
 def listLastSnapshot():
         listOfRestorePointInDateTimeObject = getDateObjectFromString(getListOfRestorePoint(nodeS3Path,KEYSPACE))
-        getSnapshots = getDateTimeObjectToString(listOfRestorePointInDateTimeObject,s3Snapshot)
+        getSnapshots = getDateTimeObjectToString(listOfRestorePointInDateTimeObject,s3SnapshotFolderName)
         return getSnapshots
 lastSnapshot = listLastSnapshot()
 
 for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
         keyspacePath=snapshotDirColumnFamilyPath.split("/snapshots")[0]
-        b=keyspacePath.split(cassandraDataDir())[1]
+        b=keyspacePath.split(getCassandraDataDir())[1]
         columnFamily=b.split("/")[2]
 
         s3SyncDir = nodeS3Path + "/sync_dir/"+KEYSPACE + "/"+columnFamily
