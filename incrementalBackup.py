@@ -8,7 +8,6 @@ from glob import glob
 import getopt, sys, os
 import boto
 from boto.exception import S3ResponseError
-import config
 import yaml
 import ntpath
 from files_syncer import getNewlyAddedFiles
@@ -24,7 +23,16 @@ if KEYSPACE == "":
    print "Please Provide Keyspace to Incremental Backup"
    sys.exit(1)
 
-cassandraHome = config.cassandraHome
+def getCassandraHome():
+        cassandraHome=''
+        try:
+                cassandraHome = os.environ['CASSANDRA_HOME']
+        except KeyError:
+                print "Please set the environment variable CASSANDRA_HOME"
+                sys.exit(1)
+        return cassandraHome
+
+cassandraHome = getCassandraHome()
 
 # Get cassandraDataDir
 def cassandraDataDir():

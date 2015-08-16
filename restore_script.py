@@ -81,16 +81,22 @@ def restoreKeySpace():
 	# Download Incremental Backup
 	
 	s3IncrementalDir = "s3://" + bucketName + "/" + nodeName  + "/incrementalBackup/" + keyspaceName + "/" + lastSnapshot + "/"
+	
 	s3IncrementalDirList = "aws s3 ls " + s3IncrementalDir
+	print s3IncrementalDirList
 	columnFamiliesList = os.popen(s3IncrementalDirList).readlines()
+	print columnFamiliesList
         for CF in columnFamiliesList:
-               	s3ColumnFamilyPath = s3IncrementalDirList + CF.rstrip('/').split()[1]
-		filesInColumnFamily = os.popen(s3ColumnFamilyPath).readlines()
+               	s3ColumnFamilyPath = s3IncrementalDir + CF.rstrip('/').split()[1]
+		print s3ColumnFamilyPath
+		s3ColumnFamilyPathCommand =  "aws s3 ls " + s3ColumnFamilyPath
+		filesInColumnFamily = os.popen(s3ColumnFamilyPathCommand).readlines()
+		print filesInColumnFamily
 		for files in filesInColumnFamily:
 			fileName=files.split(' ')
 			length = len(fileName)
 			print fileName[length-1].rstrip()
-			downloadIncrementalBackup = "aws s3 cp " + s3ColumnFamilyPath + "/" + fileName[length-1].rstrip() + " " + keySpaceSSTLocation + "/" + CF.rstrip('/').split()[1]
+			downloadIncrementalBackup = "aws s3 cp " + s3ColumnFamilyPath + fileName[length-1].rstrip() + " " + keySpaceSSTLocation + "/" + CF.rstrip('/').split()[1]
 			os.system(downloadIncrementalBackup)
 
 	
