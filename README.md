@@ -68,5 +68,6 @@ Note : nodes log can be found at <nodes>/root/restore.log
 ``` 
 ### List Available Snapshots
 It lists all available snapshots
-
+```bash
 $ python hecuba.py listSnapshots
+``` 
