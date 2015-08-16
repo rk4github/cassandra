@@ -1,10 +1,13 @@
 # Hecuba
-A utility to backup Cassandra node using snapshots & incremental backups to Amazon S3.
+Hecuba is a highly optimized utility that takes care of multi node backup and restore using Amazon S3 as the storage container.
 
-The objective of the project to make DBA, system admin & DevOps life easier into `Snapshotting`, `Incremental Backup` and `Restoring` Cassandra.
+## Features
+1. Take full snapshot - Passes only the incremental changes to S3, reduces the data transfer over network.
+2. Take incremental backups - Supports incremental backups and again reduces data tranfer by selectively transferring diffs.
+3. Restore - Can restore to any given time using the full snapshots and relevant incremental backup.
+4. List all available snapshots.
 
-This utility is made under keeping in mind of huge database (more then 500 GB), first time utility uploads entire snapshot afterwords only upload differential snapshot. Utility works to minimize load on system & for faster result.
-This is achieved after using differential calculation, utility compares generated snapshot with available snapshot in s3 (sync_dir) if gets difference upload back to s3, after syncing differences to s3, create snapshot accordingly.
+This utility is designed to handle huge database sizes (and has beed tested to the tune of 500 GB). Utility works to minimize load on system & for faster result.
 
 #### Prerequisites
 ```bash
@@ -26,8 +29,11 @@ $ aws --version
 ## Getting Started 
 
 ### Snapshot :
-Hecuba takes `Keyspace` as user input & triggers `Snapshot` against provided `Keyspace`. Before triggering snapshot ask for list of nodes on which backup will be triggers, user need to provide IP(s), those nodes require password-less login & prerequisites to be install otherwise backup fail. once get list of nodes, utility copy require scripts on those nodes and triggers snapshots in parallel & upload to s3. Here `aws-cli` is being used for uploading files.
+Hecuba takes `Keyspace` as user input & triggers `Snapshot` against provided `Keyspace`. 
 
+Following arguments are needed to trigger full snapshot
+1. Keyspace name
+2. IPs of nodes for which the backup needs to be triggered (IP list needs to be provided as user input and has to be in quotes and comma separated).
 
 ```bash
 # Trigger Backup ( i.e. <hecuba.py> <backup> <Keyspace> )
@@ -37,8 +43,9 @@ Note : nodes log can be found at <nodes>/root/backup.log
 ```
 
 ### Incremental Backup : 
-Hecuba takes `Keyspace` as user input & triggers `flush` against provided `Keyspace`. Before triggering `flush` ask for list of nodes on which incremental backup will be triggers, user need to provide IP(s), those nodes require password-less login & prerequisites to be install otherwise incremental backup fail. once get list of nodes, utility copy require scripts on those nodes and triggers incremental backup in parallel & upload to s3. Here `aws-cli` is being used for uploading files.
-
+To trigger incremental backup following inputs are needed
+1. Keyspace name
+2. IPs of nodes for which the backup needs to be triggered (IP list needs to be provided as user input and has to be in quotes and comma separated).
 
 ```bash
 # Trigger Backup ( i.e. <hecuba.py> <backup> <Keyspace> )
@@ -47,15 +54,20 @@ $ python hecuba.py incremental  demo
 Note : nodes log can be found at <nodes>/root/backup.log
 ```
 
-
-
 ### Restore :
-Hecuba takes `Keyspace` & `Restore_Point` as user input & ask for list of nodes on which restore will be triggers, user need to provide IP(s), those nodes require password-less login & prerequisites to be install otherwise restore fail. Restore need user confirmation for stopping cassandra, deleting keyspace, after confirmation, script triggers restore against provided Keyspace. `Restore_point` will match with closest snapshot + incremental Backup. Here `aws-cli` is being used for downloading files.
+To trigger resotre following inputs are needed
+1. Keyspace name
+2. IPs of nodes for which the backup needs to be triggered (IP list needs to be provided as user input and has to be in quotes and comma separated)
+3. Date (restore point)
 
 ```bash
 # Trigger Backup ( i.e. <script> <restore> <Keyspace> <restore_point>)
 $ python hecuba.py restore demo 20150810
 
 Note : nodes log can be found at <nodes>/root/restore.log
-```
-
+``` 
+### List Available Snapshots
+It lists all available snapshots
+```bash
+$ python hecuba.py listSnapshots
+``` 
