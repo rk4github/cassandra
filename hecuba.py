@@ -8,18 +8,18 @@ def createBackup(ipAddress,absoluteScriptPath):
 	command = "source /etc/profile;nohup python "+absoluteScriptPath+" "+ sys.argv[2] + " </dev/null >backup.log 2>&1 &"
 	ssh_cmd = "ssh "+ipAddress+" "+'"%s"'%command
 	scpCommand = "scp backup.py files_syncer.py files_function.py findRestoreSnapshot.py  " + ipAddress + ":/opt/"
-	print scpCommand
-	print ssh_cmd
+	print "Copying the relevant scripts to Target machine using: "+scpCommand+" On Machine with ip : "+ipAddress
 	os.system(scpCommand)
+	print "Exeuting command : " + ssh_cmd
 	os.system(ssh_cmd)
 
 def createIncrementalBackup(ipAddress,absoluteScriptPath):
 	command = "source /etc/profile;nohup python "+absoluteScriptPath+" "+ sys.argv[2] + " </dev/null >incremental.log 2>&1 &"
        	ssh_cmd = "ssh "+ipAddress+" "+'"%s"'%command
         scpCommand = "scp incrementalBackup.py files_syncer.py files_function.py " + ipAddress + ":/opt/"
-	print scpCommand
-        print ssh_cmd
+	print "Copying the relevant scripts to Target machine using: "+scpCommand+" On Machine with ip : "+ipAddress
         os.system(scpCommand)
+        print "Exeuting command : " + ssh_cmd
 	os.system(ssh_cmd)
 
 def restore(ipAddress,absoluteScriptPath):
@@ -29,9 +29,9 @@ def restore(ipAddress,absoluteScriptPath):
 		command="source /etc/profile;python "+absoluteScriptPath+" "+ sys.argv[2] +" "+ sys.argv[3] +" "+userInput+" </dev/null >restore.log 2>&1 &"
 		ssh_cmd="ssh "+ipAddress+" "+'"%s"'%command
 		scpCommand = "scp restore_script.py " + ipAddress + ":/opt/"
-		print scpCommand
-		print ssh_cmd
+		print  "Copying relevant scripts to Target machine using: "+scpCommand+" On Machine with ip : "+ipAddress
 		os.system(scpCommand)
+		print "Exeuting command : " + ssh_cmd
 		os.system(ssh_cmd)
 	else:
 		sys.exit(1)	
