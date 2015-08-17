@@ -3,6 +3,7 @@
 import sys
 import os
 import ConfigParser
+import socket
 
 def createBackup(ipAddress,absoluteScriptPath):
 	command = "source /etc/profile;nohup python "+absoluteScriptPath+" "+ sys.argv[2] + " </dev/null >backup.log 2>&1 &"
@@ -45,10 +46,10 @@ def performAction(inputListOfIPAddress,action,absoluteScriptPath):
 			if action == 'incremental':
 				createIncrementalBackup(ipAddress,absoluteScriptPath)
 			else:
-				if sys.argv[1] == 'restore':
+				if action == 'restore':
 					restore(ipAddress,absoluteScriptPath)
 				else:
-					print "Please provide valid action to perform: " + action
+                                        print "Please provide valid action to perform: " + action	
 
 
 #User Interraction and script execution begins from here
@@ -63,6 +64,3 @@ print listOfIPAddress
 inputListOfIPAddress = input('Please provide nodes list comma separated values in following format:  "10.24.1.20,10.24.1.21"\n')
 performAction(inputListOfIPAddress,action,absoluteScriptPath)
 
-
-
-	
