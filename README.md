@@ -81,5 +81,8 @@ Note : nodes log can be found at <nodes>/root/restore.log
 It lists all available snapshots
 
 ```bash
-$ python hecuba.py listSnapshots
+# List Snapshots ( i.e. <getListOfAvailableSnapshots.py> <Bucketname> <Keyspace> )
+$ python getListOfAvailableSnapshots.py cassandra-backup-dir demo
 ``` 
+
+
