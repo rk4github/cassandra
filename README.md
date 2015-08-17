@@ -31,8 +31,10 @@ $ aws --version
 ### Snapshot :
 Hecuba takes `Keyspace` as user input & triggers `Snapshot` against provided `Keyspace`. 
 
-Following arguments are needed to trigger full snapshot
+Following arguments are needed to trigger full snapshot 
+
 1. Keyspace name
+
 2. IPs of nodes for which the backup needs to be triggered (IP list needs to be provided as user input and has to be in quotes and comma separated).
 
 ```bash
@@ -43,8 +45,11 @@ Note : nodes log can be found at <nodes>/root/backup.log
 ```
 
 ### Incremental Backup : 
+
 To trigger incremental backup following inputs are needed
+
 1. Keyspace name
+
 2. IPs of nodes for which the backup needs to be triggered (IP list needs to be provided as user input and has to be in quotes and comma separated).
 
 ```bash
@@ -55,9 +60,12 @@ Note : nodes log can be found at <nodes>/root/backup.log
 ```
 
 ### Restore :
-To trigger resotre following inputs are needed
+To trigger resotre following inputs are needed  
+
 1. Keyspace name
+
 2. IPs of nodes for which the backup needs to be triggered (IP list needs to be provided as user input and has to be in quotes and comma separated)
+
 3. Date (restore point)
 
 ```bash
@@ -66,8 +74,12 @@ $ python hecuba.py restore demo 20150810
 
 Note : nodes log can be found at <nodes>/root/restore.log
 ``` 
+
+
 ### List Available Snapshots
+
 It lists all available snapshots
+
 ```bash
 $ python hecuba.py listSnapshots
 ``` 
