@@ -9,7 +9,6 @@ def getListOfRestorePoint(nodeS3Path,keySpace):
         newlist = []
         for RP in RestorePoints:
                 newlist.append(RP.rstrip('/').split()[1].strip('/'))
-
         return newlist
 
 def getDateObjectFromString(listOfDates):
