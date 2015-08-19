@@ -18,6 +18,7 @@ from findRestoreSnapshot import getDateTimeObjectToString
 from findRestoreSnapshot import getListOfRestorePoint
 from findRestoreSnapshot import getDateObjectFromString
 
+
 def getCassandraHome():
 	cassandraHome=''
 	try:
@@ -55,17 +56,18 @@ def syncSnapshotContentToS3SyncDirAndCreateSnapshot(nodeS3Path,keyspace,snapshot
         # Get Current working directory
         scriptExecutionPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
         snapshotDirColumnFamilyPaths = getLocalColumnFamilyPathsToSync(keyspace,snapshotDate)
+        syncDir = 'sync_dir'
+        action = 'backup' # It's important for deciding sync or snapshots directory for uploading files
+	s3SnapshotFolderName = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d')
         for snapshotDirColumnFamilyPath in snapshotDirColumnFamilyPaths:
                 columnFamily=getColumnFamilyName(snapshotDirColumnFamilyPath)
-        	s3SyncDir = nodeS3Path + "/sync_dir/"+keyspace + "/"+columnFamily
-	        syncDir = 'sync_dir'
+		s3SyncDir = nodeS3Path + "/sync_dir/"+keyspace + "/"+columnFamily
         	os.chdir(snapshotDirColumnFamilyPath)
-		for newFile in getNewlyAddedFiles(snapshotDirColumnFamilyPath,syncDir,keyspace,nodeS3Path,columnFamily):
+		for newFile in getNewlyAddedFiles(snapshotDirColumnFamilyPath,nodeS3Path,syncDir,keyspace,s3SnapshotFolderName,columnFamily,action):
 			copyFileToS3(newFile,s3SyncDir)
 
-		for toBeRemovedFile in getListOfDeletedFiles(snapshotDirColumnFamilyPath,syncDir,keyspace,nodeS3Path,columnFamily):
+		for toBeRemovedFile in getListOfDeletedFiles(snapshotDirColumnFamilyPath,nodeS3Path,syncDir,keyspace,columnFamily,action,s3SnapshotFolderName):
 			deleteFilesFromS3(toBeRemovedFile,s3SyncDir)
-		createIncrementalBackupAtS3ForPreviousSnapshot(nodeS3Path,keyspace,columnFamily,s3SnapshotFolderName)
 
         os.chdir(scriptExecutionPath)
         createSnapshotAtS3(nodeS3Path, keyspace, snapshotDate,columnFamily,s3SyncDir)
@@ -115,27 +117,5 @@ def getCassandraDataDir():
 
         dataFileDirectory = keys["data_file_directories"]
         return dataFileDirectory[0]
-
-def getLatestAvailableSnapshotFolderNameAtS3(nodeS3Path,keyspace,s3SnapshotFolderName):
-       	listOfRestorePointInDateTimeObject = getDateObjectFromString(getListOfRestorePoint(nodeS3Path,keyspace))
-        return getDateTimeObjectToString(listOfRestorePointInDateTimeObject,s3SnapshotFolderName)
-
-def createIncrementalBackupAtS3ForPreviousSnapshot(nodeS3Path,keyspace,columnFamily,s3SnapshotFolderName):
-       lastSnapshot = getLatestAvailableSnapshotFolderNameAtS3(nodeS3Path,keyspace,s3SnapshotFolderName)
-       incrementalBackupSyncDir = nodeS3Path + "/incrementalBackupSyncDir/" + keyspace + "/" + columnFamily
-       toBeCreatedIncrementalBackupPath = nodeS3Path + "/incrementalBackup/" + keyspace + "/" + lastSnapshot + "/" + columnFamily
-       createIncrementalBackupDirCommand = "aws s3 sync " + incrementalBackupSyncDir + " " + toBeCreatedIncrementalBackupPath
-       cleanIncrementalBackupSyncDir = "aws s3 ls " + nodeS3Path + "/incrementalBackupSyncDir/" + keyspace + "/" + columnFamily + "/"
-       print "Creating Incremental Backup: <S3-2-S3>"
-       print "Executing: " + createIncrementalBackupDirCommand + " to create incremental backup directory for " + keyspace + "/" + columnFamily
-       os.system(createIncrementalBackupDirCommand)
-       filesInIncrementalS3SyncDir = os.popen(cleanIncrementalBackupSyncDir).readlines()
-
-       for files in filesInIncrementalS3SyncDir:
-           	fileName=files.split(' ')
-               	length = len(fileName)
-                removeFiles = "aws s3 rm " + incrementalBackupSyncDir + "/" + fileName[length-1].rstrip()
-                print fileName[length-1].rstrip()
-                os.system(removeFiles)
 
 createSnapshot(sys.argv[1])
