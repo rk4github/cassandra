@@ -6,19 +6,19 @@ import ConfigParser
 import socket
 
 def createBackup(ipAddress,absoluteScriptPath):
-	command = "source /etc/profile;nohup python "+absoluteScriptPath+" "+ sys.argv[2] + " </dev/null >backup.log 2>&1 &"
-	ssh_cmd = "ssh "+ipAddress+" "+'"%s"'%command
-	scpCommand = "scp backup.py files_syncer.py files_function.py findRestoreSnapshot.py  " + ipAddress + ":/opt/"
-	print "Copying the relevant scripts to Target machine using: "+scpCommand+" On Machine with ip : "+ipAddress
+	command = "source /etc/profile;taskset -c 0 nice -n 19 ionice -c3 -n7 nohup python "+absoluteScriptPath+" "+ sys.argv[2] + " </dev/null >backup.log 2>&1 &"
+	ssh_cmd = "ssh "+user+'@'+ipAddress+" "+'"%s"'%command
+	scpCommand = "scp backup.py files_syncer.py files_function.py findRestoreSnapshot.py  " +user+'@'+ ipAddress + ":/tmp/"
+	print "Copying the relevant scripts to Target machine using: "+scpCommand+" On Machine with ip : "+user+'@'+ipAddress
 	os.system(scpCommand)
 	print "Exeuting command : " + ssh_cmd
 	os.system(ssh_cmd)
 
 def createIncrementalBackup(ipAddress,absoluteScriptPath):
-	command = "source /etc/profile;nohup python "+absoluteScriptPath+" "+ sys.argv[2] + " </dev/null >incremental.log 2>&1 &"
-       	ssh_cmd = "ssh "+ipAddress+" "+'"%s"'%command
-        scpCommand = "scp incrementalBackup.py files_syncer.py files_function.py " + ipAddress + ":/opt/"
-	print "Copying the relevant scripts to Target machine using: "+scpCommand+" On Machine with ip : "+ipAddress
+	command = "source /etc/profile;taskset -c 0 nice -n 19 ionice -c3 -n7 nohup python "+absoluteScriptPath+" "+ sys.argv[2] + " </dev/null >incremental.log 2>&1 &"
+       	ssh_cmd = "ssh "+user+'@'+ipAddress+" "+'"%s"'%command
+        scpCommand = "scp incrementalBackup.py files_syncer.py files_function.py " +user+'@'+ ipAddress + ":/tmp/"
+	print "Copying the relevant scripts to Target machine using: "+scpCommand+" On Machine with ip : "+user+'@'+ipAddress
         os.system(scpCommand)
         print "Exeuting command : " + ssh_cmd
 	os.system(ssh_cmd)
@@ -27,10 +27,10 @@ def restore(ipAddress,absoluteScriptPath):
 	print "If you proceed further the Keyspace provided will be restored on all provided nodes, following actions will be taken: 1. Stop Cassandra, 2. Delete commit logs, 3. Restore keyspace 4. Restart cassandra."
 	userInput = raw_input("Do you want to continue Y/N")
 	if userInput == "Y":
-		command="source /etc/profile;python "+absoluteScriptPath+" "+ sys.argv[2] +" "+ sys.argv[3] +" "+userInput+" </dev/null >restore.log 2>&1 &"
-		ssh_cmd="ssh "+ipAddress+" "+'"%s"'%command
-		scpCommand = "scp restore_script.py " + ipAddress + ":/opt/"
-		print  "Copying relevant scripts to Target machine using: "+scpCommand+" On Machine with ip : "+ipAddress
+		command="source /etc/profile;taskset -c 0 nice -n 19 ionice -c3 -n7 python "+absoluteScriptPath+" "+ sys.argv[2] +" "+ sys.argv[3] +" "+userInput+" </dev/null >restore.log 2>&1 &"
+		ssh_cmd="ssh "+user+'@'+ipAddress+" "+'"%s"'%command
+		scpCommand = "scp restore_script.py " +user+'@'+ ipAddress + ":/tmp/"
+		print  "Copying relevant scripts to Target machine using: "+scpCommand+" On Machine with ip : "+user+'@'+ipAddress
 		os.system(scpCommand)
 		print "Exeuting command : " + ssh_cmd
 		os.system(ssh_cmd)
@@ -58,6 +58,7 @@ config = ConfigParser.ConfigParser()
 config.readfp(open(r'server.properties'))
 listOfIPAddress = config.get('servers', 'ip').split(",")
 absoluteScriptPath = config.get('servers', action)
+user = config.get('servers', 'user')
 print "List of Nodes"
 print listOfIPAddress
 
