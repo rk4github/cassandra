@@ -9,7 +9,7 @@ def createMysqlDump():
     databaseUserName = 'root'
     databasePassword = sys.argv[1]
     backupTime = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H%M%S')
-    outputFileName = "zabbix" + backupTime + ".sql"
+    outputFileName = databaseName + backupTime + ".sql"
     commandToCreateMysqlDump = "mysqldump -u"+databaseUserName+ " -p"+databasePassword+ " "+databaseName+ " > " +outputFileName
     print "Creating Mysql Database Dump of Database Name "+databaseName
     print commandToCreateMysqlDump
@@ -50,3 +50,4 @@ def getListOfMysqlDumpCreatedTime():
             os.system(commandToRemoveOlderMysqlDumpAtS3)
 
 getListOfMysqlDumpCreatedTime()
+
