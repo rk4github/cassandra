@@ -28,7 +28,7 @@ def copyMysqlDumpToS3():
     s3SyncCommand = "aws s3 cp "+ outputFileName + " " + s3SyncDir + "/mysqlbackup/" + outputFileName
     print "Uploading Mysql Dump: <Local-2-S3>"
     print s3SyncCommand
-    os.system(s3SyncCommand)
+#    os.system(s3SyncCommand)
 
 def get7thDayFromCurrentDay():
     today = DT.date.today()
