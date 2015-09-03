@@ -5,9 +5,9 @@ import datetime
 import datetime as DT
 
 def createMysqlDump():
-    databaseName = 'zabbix'
-    databaseUserName = 'root'
-    databasePassword = sys.argv[1]
+    databaseName = sys.argv[3]
+    databaseUserName = sys.argv[1]
+    databasePassword = sys.argv[2]
     backupTime = datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H%M%S')
     outputFileName = databaseName + backupTime + ".sql"
     commandToCreateMysqlDump = "mysqldump -u"+databaseUserName+ " -p"+databasePassword+ " "+databaseName+ " > " +outputFileName
