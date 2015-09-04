@@ -6,6 +6,7 @@ Hecuba is a highly optimized utility that takes care of multi node backup and re
 2. Take incremental backups - Supports incremental backups and again reduces data tranfer by selectively transferring diffs.
 3. Restore - Can restore to any given time using the full snapshots and relevant incremental backup.
 4. List all available snapshots.
+5. Take mysql dump & upload to Amazon S3
 
 This utility is designed to handle huge database sizes (and has beed tested to the tune of 500 GB). Utility works to minimize load on system & for faster result.
 
@@ -85,4 +86,20 @@ It lists all available snapshots
 $ python getListOfAvailableSnapshots.py cassandra-backup-dir demo
 ``` 
 
+## Mysql Backup
+To trigger Mysql Dump following inputs are needed  
 
+1. Database User Name
+
+2. Database Password
+
+3. Database Name
+
+4. IPs of nodes for which the backup needs to be triggered (IP list needs to be provided as user input and has to be in quotes and comma separated)
+
+```bash
+# Trigger Backup ( i.e. <script> <mysql> <dbUserName> <dbPassword> <dbName>)
+$ python hecuba.py mysql root test testdatabase
+
+Note : nodes log can be found at <nodes>/root/mysqlBackup.log
+``` 
