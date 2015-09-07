@@ -7,7 +7,6 @@ class hecuba(object):
         parser = argparse.ArgumentParser(
             description='Hecuba Python utility for Database Backup & Restore',
             usage='''hecuba.py <command> [<args>]
-
 The most commonly used hecuba.py commands are:
    backup           Take Cassandra's Snapshot & upload to Amazon S3
    incremental      Take Cassandra's Incremental Backup & upload to Amazon S3
@@ -55,9 +54,3 @@ The most commonly used hecuba.py commands are:
 
 if __name__ == '__main__':
     hecuba()
-    
-    
-
-
-
-
