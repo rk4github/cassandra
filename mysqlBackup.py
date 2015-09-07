@@ -36,11 +36,15 @@ def get7thDayFromCurrentDay():
     return week_ago
 
 def getListOfMysqlDumpCreatedTime():
-    copyMysqlDumpToS3()
     s3SyncDir = getNodeBackupS3Path()
-    week_ago = get7thDayFromCurrentDay()
     commandToGetlistOfMysqlDumpFiles = "aws s3 ls " + s3SyncDir + "/mysqlbackup/"
     listOfMysqlDumpFiles = os.popen(commandToGetlistOfMysqlDumpFiles).readlines()
+    return listOfMysqlDumpFiles
+
+def removeMysqlDumpOlderThen7thDay():
+    s3SyncDir = getNodeBackupS3Path()
+    week_ago = get7thDayFromCurrentDay()
+    listOfMysqlDumpFiles = getListOfMysqlDumpCreatedTime()
     for createdTimeOfMysqlDumpAtS3 in listOfMysqlDumpFiles:
         getCreatedDateOfMysqlDumpAtS3 = createdTimeOfMysqlDumpAtS3.rstrip('/').split()[0].strip('/')
         getOlderDateMoreThen7Days = week_ago > datetime.datetime.strptime(getCreatedDateOfMysqlDumpAtS3, '%Y-%m-%d').date()
@@ -49,5 +53,9 @@ def getListOfMysqlDumpCreatedTime():
             commandToRemoveOlderMysqlDumpAtS3 = "aws s3 rm " + s3SyncDir + "/mysqlbackup/"+getFileName
             os.system(commandToRemoveOlderMysqlDumpAtS3)
 
-getListOfMysqlDumpCreatedTime()
 
+def main():
+    copyMysqlDumpToS3()
+    removeMysqlDumpOlderThen7thDay()
+
+main()
